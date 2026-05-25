@@ -1,0 +1,2494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拉脱法测液体表面张力系数 - 物理实验</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+/* ============================================================
+   CSS DESIGN SYSTEM — Glass-morphism Academic Theme
+   ============================================================ */
+:root {
+  --bg-start: #eef2f7;
+  --bg-end: #d9e2ec;
+  --card-bg: rgba(255,255,255,0.82);
+  --card-blur: blur(14px);
+  --primary: #1e3a8a;
+  --primary-light: #3b82f6;
+  --accent: #dc2626;
+  --success: #059669;
+  --warning: #d97706;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #cbd5e1;
+  --border-light: #e2e8f0;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+  background-attachment: fixed;
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ---- App Shell ---- */
+.app-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+/* ---- Header ---- */
+.app-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.app-header h1 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.5px;
+}
+.app-header .subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ---- Tab Navigation ---- */
+.tab-nav {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 0;
+  background: var(--card-bg);
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+  border-radius: var(--radius) var(--radius) 0 0;
+  border: 1px solid rgba(255,255,255,0.6);
+  border-bottom: none;
+  overflow: hidden;
+}
+.tab-btn {
+  flex: 1;
+  max-width: 240px;
+  padding: 14px 28px;
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  transition: color var(--transition), background var(--transition);
+  font-family: inherit;
+  letter-spacing: 0.3px;
+}
+.tab-btn:hover { color: var(--primary); background: rgba(59,130,246,0.04); }
+.tab-btn.active {
+  color: var(--primary);
+  font-weight: 700;
+}
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  background: var(--primary-light);
+  border-radius: 3px 3px 0 0;
+  transition: left var(--transition), right var(--transition);
+}
+
+/* ---- Tab Panels Container ---- */
+.tab-panels {
+  background: var(--card-bg);
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+  border-radius: 0 0 var(--radius) var(--radius);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-top: none;
+  box-shadow: var(--shadow-md);
+  min-height: 520px;
+  overflow: hidden;
+}
+
+/* ---- Individual Panel ---- */
+.tab-panel {
+  display: none;
+  padding: 28px 24px;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.tab-panel.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+/* ============================================================
+   PANEL 1: Simulation Layout
+   ============================================================ */
+.sim-layout {
+  display: grid;
+  grid-template-columns: 620px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.sim-left { min-width: 0; }
+.sim-right { min-width: 0; }
+
+#mainCanvas {
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  background: #fafbfc;
+  margin: 0 auto;
+}
+
+/* Simulation controls bar */
+.sim-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.sim-controls label {
+  font-weight: 600;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+/* Live voltmeter inline */
+.live-voltage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #0f172a;
+  color: #34d399;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: var(--radius-sm);
+  min-width: 100px;
+  justify-content: flex-end;
+  letter-spacing: 1px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+}
+.live-voltage .unit {
+  font-size: 0.75rem;
+  color: #6ee7b7;
+  font-weight: 500;
+  margin-left: 2px;
+}
+
+.status-text {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 8px;
+  min-height: 1.4em;
+}
+
+/* Chart area */
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: 380px;
+}
+.chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+.chart-caption {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* ============================================================
+   SHARED ELEMENTS
+   ============================================================ */
+select, input[type="number"] {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  background: #fff;
+  color: var(--text);
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+select:focus, input[type="number"]:focus {
+  outline: none;
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+
+.btn {
+  padding: 9px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s, box-shadow 0.15s;
+  font-family: inherit;
+  letter-spacing: 0.2px;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; filter: none !important; }
+
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.15); }
+
+.btn-danger  { background: var(--accent); color: #fff; }
+.btn-danger:hover:not(:disabled)  { filter: brightness(1.15); }
+
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover:not(:disabled) { filter: brightness(1.15); }
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ============================================================
+   PANEL 2: Quiz
+   ============================================================ */
+.quiz-container {
+  max-width: 780px;
+  margin: 0 auto;
+}
+.quiz-item {
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.55);
+  transition: border-color 0.3s, background 0.3s;
+}
+.quiz-item.correct { border-color: var(--success); background: #f0fdf4; }
+.quiz-item.incorrect { border-color: var(--accent); background: #fef2f2; }
+
+.quiz-item .q-title {
+  font-weight: 700;
+  margin-bottom: 10px;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+.quiz-item label {
+  display: block;
+  padding: 6px 10px;
+  margin: 2px 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.86rem;
+  transition: background 0.12s;
+}
+.quiz-item label:hover { background: rgba(59,130,246,0.05); }
+.quiz-item input[type="radio"] { margin-right: 7px; accent-color: var(--primary); }
+
+/* Per-option wrong-reason hint (shown after selection) */
+.option-hint {
+  display: none;
+  font-size: 0.78rem;
+  color: var(--accent);
+  padding: 3px 10px 6px 28px;
+  line-height: 1.5;
+}
+.option-hint.show { display: block; }
+
+/* Per-question full explanation panel (shown after submit) */
+.quiz-explain {
+  display: none;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.83rem;
+  line-height: 1.8;
+  border-left: 4px solid var(--primary-light);
+  background: #eff6ff;
+  color: #1e40af;
+}
+.quiz-explain.show { display: block; }
+.quiz-explain .explain-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-bottom: 6px;
+}
+.quiz-explain .explain-correct {
+  color: var(--success);
+  font-weight: 600;
+}
+.quiz-explain .explain-wrong {
+  color: var(--accent);
+}
+.quiz-explain ul {
+  margin: 4px 0 0 16px;
+  list-style: none;
+}
+.quiz-explain ul li::before {
+  content: '✗ ';
+  color: var(--accent);
+  font-weight: 700;
+}
+.quiz-explain ul li {
+  margin-bottom: 4px;
+  font-size: 0.80rem;
+}
+
+.quiz-feedback {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  display: none;
+  line-height: 1.7;
+  font-size: 0.86rem;
+}
+.quiz-feedback.show { display: block; }
+
+/* ============================================================
+   PANEL 3: Data Processing — 4-Step Inquiry Dashboard
+   ============================================================ */
+.data-container {
+  width: 100%;
+  position: relative;
+}
+
+/* ---- Tips Bar ---- */
+.tips-bar {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+  border: 1px solid #93c5fd;
+  border-radius: var(--radius-sm);
+  padding: 12px 18px;
+  margin-bottom: 18px;
+  font-size: 0.85rem;
+  color: #1e40af;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: opacity 0.3s;
+}
+.tips-bar .tips-icon { font-size: 1.2rem; }
+.tips-bar .tips-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #64748b;
+  opacity: 0.5;
+}
+.tips-bar .tips-close:hover { opacity: 1; }
+
+/* ---- Magic Button ---- */
+.btn-magic {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: #fff;
+  border: none;
+  padding: 11px 22px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s, transform 0.1s, box-shadow 0.2s;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 12px rgba(99,102,241,0.30);
+}
+.btn-magic:hover { filter: brightness(1.12); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.40); }
+.btn-magic:active { transform: scale(0.97); }
+
+.magic-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+/* ---- Step Card ---- */
+.step-card {
+  background: rgba(255,255,255,0.60);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s;
+}
+.step-card:hover { box-shadow: var(--shadow-md); }
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.step-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ---- Tooltip ---- */
+.tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+.tooltip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+.tooltip-bubble {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #f1f5f9;
+  font-size: 0.76rem;
+  font-weight: 400;
+  padding: 7px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+}
+.tooltip-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+}
+.tooltip-wrap:hover .tooltip-bubble { display: block; }
+
+/* ---- Inline Param Row ---- */
+.param-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 14px;
+}
+.param-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.param-group label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.param-group input,
+.param-group select {
+  width: 130px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  background: #fff;
+  color: var(--text);
+  font-family: inherit;
+  text-align: center;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.param-group input:focus,
+.param-group select:focus {
+  outline: none;
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+.param-group input:disabled { background: #f1f5f9; color: #94a3b8; }
+
+/* ---- Scrollable table wrapper ---- */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
+/* ---- Data table ---- */
+.data-table {
+  width: 100%;
+  min-width: 540px;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+.data-table th, .data-table td {
+  padding: 9px 7px;
+  border: 1px solid var(--border-light);
+  text-align: center;
+}
+.data-table thead th {
+  background: #f8fafc;
+  font-weight: 600;
+  font-size: 0.80rem;
+  color: var(--text-muted);
+}
+.data-table tbody td { background: #fff; }
+.data-table tbody input {
+  width: 88px;
+  padding: 6px 5px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  text-align: center;
+  font-size: 0.84rem;
+  font-family: inherit;
+}
+.data-table .alpha-cell {
+  font-weight: 600;
+  color: var(--primary);
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  min-width: 78px;
+}
+
+/* ---- Two tables side by side ---- */
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+.comparison-col {
+  min-width: 0;
+  background: rgba(255,255,255,0.40);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.comparison-col h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* ---- Action buttons ---- */
+.data-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+/* ---- Results Card ---- */
+.result-card {
+  padding: 16px 18px;
+  background: rgba(255,255,255,0.65);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  line-height: 1.9;
+  display: none;
+  margin-top: 10px;
+}
+.result-card.show { display: block; }
+.result-card .val-highlight {
+  font-weight: 700;
+  color: var(--primary);
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+.result-card .val-error {
+  font-weight: 700;
+  color: var(--accent);
+}
+.result-card .separator {
+  border-top: 1px solid var(--border-light);
+  margin: 8px 0;
+}
+
+/* ---- Highlight Banner (Step 2 conclusion) ---- */
+.highlight-banner {
+  display: none;
+  text-align: center;
+  padding: 20px 24px;
+  margin: 16px 0;
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 2px solid var(--success);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(5,150,105,0.12);
+}
+.highlight-banner.show { display: block; }
+.highlight-banner .banner-icon { font-size: 2rem; }
+.highlight-banner .banner-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--success);
+  margin: 6px 0;
+}
+.highlight-banner .banner-detail {
+  font-size: 0.84rem;
+  color: #065f46;
+  line-height: 1.7;
+}
+
+/* ---- Collapse Panel (Step 3 & 4) ---- */
+.collapse-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--primary);
+  padding: 8px 0;
+  transition: color 0.15s;
+}
+.collapse-toggle:hover { color: var(--primary-light); }
+.collapse-toggle .collapse-arrow {
+  transition: transform 0.25s;
+  font-size: 0.7rem;
+}
+.collapse-toggle.open .collapse-arrow { transform: rotate(90deg); }
+
+.collapse-body {
+  display: none;
+  padding-top: 10px;
+  animation: fadeSlideIn 0.3s ease-out;
+}
+.collapse-body.open { display: block; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Mini Chart ---- */
+.mini-chart-wrap {
+  width: 100%;
+  max-width: 580px;
+  height: 260px;
+  margin: 14px auto;
+}
+
+/* ---- Auto-conclusion tag ---- */
+.auto-conclusion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+.auto-conclusion.success {
+  background: #f0fdf4;
+  color: #065f46;
+  border: 1px solid #86efac;
+}
+.auto-conclusion.info {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+/* ---- Uncertainty grid ---- */
+.uncertainty-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+.uncertainty-item {
+  text-align: center;
+  padding: 12px 8px;
+  background: rgba(255,255,255,0.55);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+.uncertainty-item .u-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.uncertainty-item .u-value {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--primary);
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+/* ---- Calcs-results (legacy) ---- */
+.calc-results {
+  padding: 16px;
+  background: rgba(255,255,255,0.6);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  font-size: 0.86rem;
+  display: none;
+  line-height: 1.8;
+}
+.calc-results.show { display: block; }
+.calc-results .val-highlight { font-weight: 700; color: var(--primary); font-family: 'JetBrains Mono', 'Courier New', monospace; }
+.calc-results .val-error { font-weight: 700; color: var(--accent); }
+.calc-results .separator { border-top: 1px solid var(--border-light); margin: 8px 0; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 960px) {
+  .sim-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .tab-btn {
+    padding: 12px 16px;
+    font-size: 0.84rem;
+    max-width: none;
+  }
+  .chart-wrapper { height: 280px; }
+  .app-shell { padding: 12px 8px 24px; }
+  .tab-panel { padding: 18px 12px; }
+  .data-params { gap: 10px; }
+  .param-group input,
+  .param-group select { width: 100px; }
+  .comparison-grid { grid-template-columns: 1fr; }
+  .uncertainty-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes pulse-green {
+  0%, 100% { box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
+  50% { box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 0 10px rgba(52,211,153,0.3); }
+}
+.live-voltage.pulsing { animation: pulse-green 0.8s ease-in-out infinite; }
+
+@keyframes highlight-flash {
+  0% { background: #dbeafe; }
+  100% { background: transparent; }
+}
+.highlight-input {
+  animation: highlight-flash 1.2s ease-out;
+}
+
+/* ---- QR Code Float Button & Modal ---- */
+.qr-float-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(30,58,138,0.35);
+  z-index: 999;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qr-float-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 24px rgba(30,58,138,0.48);
+}
+
+.qr-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.qr-modal-overlay.show { display: flex; }
+
+.qr-modal {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 28px 24px 20px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  max-width: 340px;
+  width: 90%;
+}
+.qr-modal h3 {
+  font-size: 1rem;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+.qr-modal .qr-url {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  word-break: break-all;
+}
+.qr-modal .qr-close {
+  margin-top: 14px;
+  padding: 8px 22px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.qr-modal .qr-close:hover { filter: brightness(1.15); }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ===== Header ===== -->
+  <header class="app-header">
+    <h1>拉脱法测液体表面张力系数</h1>
+    <p class="subtitle">基于原始实验数据高精度拟合的数字孪生仿真系统</p>
+  </header>
+
+  <!-- ===== Tab Navigation ===== -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="simulation">物理仿真</button>
+    <button class="tab-btn" data-tab="quiz">知识问答</button>
+    <button class="tab-btn" data-tab="data">数据处理</button>
+  </nav>
+
+  <!-- ===== Tab Panels ===== -->
+  <div class="tab-panels">
+
+    <!-- ========== PANEL 1: Simulation ========== -->
+    <div class="tab-panel active" id="panel-simulation">
+      <div class="sim-layout">
+        <div class="sim-left">
+          <canvas id="mainCanvas" width="600" height="450"></canvas>
+          <div class="sim-controls">
+            <label for="liquidSelect">液体：</label>
+            <select id="liquidSelect">
+              <option value="water">实验数据拟合专案</option>
+            </select>
+            <span class="live-voltage" id="liveVoltage">
+              <span>0.1900</span><span class="unit">V</span>
+            </span>
+            <button class="btn btn-primary" id="btnAutoRun">开始自动演示</button>
+            <button class="btn btn-danger" id="btnReset">重置</button>
+          </div>
+          <p class="status-text" id="statusText">准备就绪。点击"开始自动演示"启动实验。</p>
+        </div>
+        <div class="sim-right">
+          <div class="chart-wrapper">
+            <canvas id="voltageChart"></canvas>
+          </div>
+          <p class="chart-caption">X轴：液膜拉伸位移 (mm) &nbsp;|&nbsp; Y轴：传感器电压 ΔU (V) &nbsp;|&nbsp; 曲线永久留存供分析</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PANEL 2: Quiz ========== -->
+    <div class="tab-panel" id="panel-quiz">
+      <div class="quiz-container">
+        <div class="quiz-item" id="quizQ1">
+          <p class="q-title">1. 公式 α = F / [π(D₁ + D₂)] 中，为什么分母使用 π(D₁ + D₂) 而非单纯的环周长？</p>
+          <label><input type="radio" name="q1" value="A"> A. 仅是历史习惯，并无特殊物理含义</label>
+          <p class="option-hint" data-for="q1-A">✗ 表面张力定义为单位长度上的力，公式中分母必须严格对应实际受力线长度，绝非历史习惯。</p>
+          <label><input type="radio" name="q1" value="B"> B. 液体同时附着在环的内外侧表面，有效接触线总长为内外周长之和</label>
+          <p class="option-hint" data-for="q1-B" style="color:#059669;">✓ 正确！拉脱法中液体同时润湿金属环的内外两侧，接触线总长 = πD₁(外) + πD₂(内)。</p>
+          <label><input type="radio" name="q1" value="C"> C. D₁ 表示液膜外径，D₂ 表示金属丝径，两者相乘才得有效面积</label>
+          <p class="option-hint" data-for="q1-C">✗ D₁、D₂ 分别代表金属环的外径和内径（单位 mm），相加求总周长（非相乘求面积），接触线与"液膜面积"无关。</p>
+          <label><input type="radio" name="q1" value="D"> D. 仅为了让计算结果与标准值相匹配</label>
+          <p class="option-hint" data-for="q1-D">✗ 公式源自拉脱法基本原理：α = F / L，其中 L 为液膜与环的实际接触线总长度，有严格的物理推导，非经验凑数。</p>
+          <div class="quiz-explain" id="explainQ1"></div>
+        </div>
+        <div class="quiz-item" id="quizQ2">
+          <p class="q-title">2. 实验时为什么要保证金属环严格水平且洁净（完全润湿）？</p>
+          <label><input type="radio" name="q2" value="A"> A. 纯属操作习惯，对结果影响不大</label>
+          <p class="option-hint" data-for="q2-A">✗ 环的水平度和洁净度直接决定润湿均匀性，是实验成败的关键前提。水平偏差或污渍会导致有效接触线产生不可预估的偏离。</p>
+          <label><input type="radio" name="q2" value="B"> B. 若环不水平或不洁净，液体在环上的润湿不均匀，有效接触线长度将偏离理论值 π(D₁+D₂)</label>
+          <p class="option-hint" data-for="q2-B" style="color:#059669;">✓ 正确！润湿不均匀意味着部分区域液体未附着或附着异常，有效接触线不再是完整的 π(D₁+D₂)，引入显著系统误差。</p>
+          <label><input type="radio" name="q2" value="C"> C. 主要是为了减少环的自重引起的系统误差</label>
+          <p class="option-hint" data-for="q2-C">✗ 环的自重可通过传感器调零消除，与水平度无关。倾斜的环主要影响的是液体润湿的均匀性而非自重。</p>
+          <label><input type="radio" name="q2" value="D"> D. 仅为了防护传感器不被液体腐蚀</label>
+          <p class="option-hint" data-for="q2-D">✗ 传感器防护与环的水平度和洁净度完全无关。这是测量精度问题，不是设备保护问题。</p>
+          <div class="quiz-explain" id="explainQ2"></div>
+        </div>
+        <div class="quiz-item" id="quizQ3">
+          <p class="q-title">3. 若操作者在液膜尚未完全拉断时就匆忙读取了电压值，最终计算的表面张力系数会如何？</p>
+          <label><input type="radio" name="q3" value="A"> A. 偏大 — 因为液膜尚在，拉力更大</label>
+          <p class="option-hint" data-for="q3-A">✗ 拉脱法要求读取液膜断裂瞬间的最大值 U_max。若未到断裂点，电压仍处于上升阶段，读数值小于真正的 U_max。</p>
+          <label><input type="radio" name="q3" value="B"> B. 偏小 — 提前读取的电压小于真正的 U_max，导致计算值偏低</label>
+          <p class="option-hint" data-for="q3-B" style="color:#059669;">✓ 正确！U_max 出现在液膜恰好断裂的瞬间（C点），在此之前电压还在上升，读数必然偏小。由 α ∝ U_max 知，α 也偏小。</p>
+          <label><input type="radio" name="q3" value="C"> C. 不变 — 拉断前后电压无差别</label>
+          <p class="option-hint" data-for="q3-C">✗ 液膜拉断前后电压有显著差异——拉断前电压持续上升到峰值，拉断瞬间垂直骤降，所以"无差别"是错误的。</p>
+          <label><input type="radio" name="q3" value="D"> D. 无法确定</label>
+          <p class="option-hint" data-for="q3-D">✗ 结果是确定的，可从实验原理严格推导：提前读数 → 电压偏小 → α 偏小。不存在"无法确定"的情况。</p>
+          <div class="quiz-explain" id="explainQ3"></div>
+        </div>
+        <button class="btn btn-primary" id="btnSubmitQuiz">提交答案</button>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+      </div>
+    </div>
+
+    <!-- ========== PANEL 3: Data Processing (4-Step Inquiry Dashboard) ========== -->
+    <div class="tab-panel" id="panel-data">
+      <div class="data-container">
+
+        <!-- Magic Button + Tips Bar -->
+        <div class="magic-wrap">
+          <button class="btn-magic" id="btnMagicLoad">🪄 一键载入优秀实验报告数据</button>
+        </div>
+        <div class="tips-bar" id="tipsBar">
+          <span class="tips-icon">👋</span>
+          <span id="tipsText">欢迎！请先在【步骤 1】选择实验仪器开始探究。</span>
+          <button class="tips-close" id="tipsClose" title="关闭提示">✕</button>
+        </div>
+
+        <!-- ===== STEP 1: 常量录入与不确定度分析 ===== -->
+        <div class="step-card" id="step1Card">
+          <div class="step-header">
+            <span class="step-badge">1</span>
+            <span class="step-title">常量录入与不确定度分析</span>
+          </div>
+          <div class="param-row">
+            <div class="param-group">
+              <label>实验仪器</label>
+              <select id="instrumentSelect">
+                <option value="">— 请选择 —</option>
+                <option value="traditional">传统三线吊环</option>
+                <option value="improved">改进型 2mm 三角圆环</option>
+              </select>
+            </div>
+            <div class="param-group">
+              <label>外径 D₁ (mm)</label>
+              <input type="number" id="d1" value="" step="0.001" min="0.01" placeholder="选择仪器后自动填入">
+            </div>
+            <div class="param-group">
+              <label>内径 D₂ (mm)</label>
+              <input type="number" id="d2" value="" step="0.001" min="0.01" placeholder="选择仪器后自动填入">
+            </div>
+            <div class="param-group">
+              <label>灵敏度 K <span class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-bubble">力敏传感器标定系数，单位 N/V</span></span></label>
+              <input type="number" id="k" value="0.098" step="0.000001" min="0.000001">
+            </div>
+            <div class="param-group">
+              <label>标准液体参考</label>
+              <select id="refLiquid">
+                <option value="water">纯水 (72.8 mN/m)</option>
+              </select>
+            </div>
+          </div>
+          <div class="data-actions">
+            <button class="btn btn-primary" id="btnUncertainty">评估不确定度</button>
+          </div>
+          <div class="result-card" id="uncertaintyResults">
+            <strong>合成标准不确定度分析</strong>
+            <div class="uncertainty-grid">
+              <div class="uncertainty-item">
+                <div class="u-label">A类不确定度 u<sub>A</sub></div>
+                <div class="u-value" id="uA">—</div>
+              </div>
+              <div class="uncertainty-item">
+                <div class="u-label">B类不确定度 u<sub>B</sub></div>
+                <div class="u-value" id="uB">—</div>
+              </div>
+              <div class="uncertainty-item">
+                <div class="u-label">合成标准 u<sub>c</sub></div>
+                <div class="u-value" id="uC">—</div>
+              </div>
+              <div class="uncertainty-item">
+                <div class="u-label">有效自由度 ν<sub>eff</sub></div>
+                <div class="u-value" id="nuEff">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== STEP 2: 核心测量与新旧仪器对比 ===== -->
+        <div class="step-card" id="step2Card">
+          <div class="step-header">
+            <span class="step-badge">2</span>
+            <span class="step-title">核心测量与新旧仪器对比
+              <span class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-bubble">常温25°C纯水条件下，分别使用传统三线吊环和改进型三角圆环进行5次独立测量</span></span>
+            </span>
+          </div>
+          <div class="comparison-grid">
+            <!-- 传统仪器 -->
+            <div class="comparison-col">
+              <h4>传统三线吊环</h4>
+              <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr><th>次数</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+                  <tr><th>F_max (N)</th>
+                    <td><input type="number" class="trad-input" id="trad1" step="0.0001" min="0" placeholder="例: 0.0228"></td>
+                    <td><input type="number" class="trad-input" id="trad2" step="0.0001" min="0" placeholder="0.0215"></td>
+                    <td><input type="number" class="trad-input" id="trad3" step="0.0001" min="0" placeholder="0.0224"></td>
+                    <td><input type="number" class="trad-input" id="trad4" step="0.0001" min="0" placeholder="0.0231"></td>
+                    <td><input type="number" class="trad-input" id="trad5" step="0.0001" min="0" placeholder="0.0212"></td>
+                  </tr>
+                  <tr><th>α (mN/m)</th>
+                    <td class="alpha-cell" id="tradAlpha1">—</td><td class="alpha-cell" id="tradAlpha2">—</td>
+                    <td class="alpha-cell" id="tradAlpha3">—</td><td class="alpha-cell" id="tradAlpha4">—</td>
+                    <td class="alpha-cell" id="tradAlpha5">—</td>
+                  </tr>
+                </thead>
+              </table>
+              </div>
+              <div class="result-card" id="tradResult"></div>
+            </div>
+            <!-- 改进仪器 -->
+            <div class="comparison-col">
+              <h4>改进型 2mm 三角圆环</h4>
+              <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr><th>次数</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+                  <tr><th>F_max (N)</th>
+                    <td><input type="number" class="impr-input" id="impr1" step="0.0001" min="0" placeholder="例: 0.0219"></td>
+                    <td><input type="number" class="impr-input" id="impr2" step="0.0001" min="0" placeholder="0.0217"></td>
+                    <td><input type="number" class="impr-input" id="impr3" step="0.0001" min="0" placeholder="0.0220"></td>
+                    <td><input type="number" class="impr-input" id="impr4" step="0.0001" min="0" placeholder="0.0218"></td>
+                    <td><input type="number" class="impr-input" id="impr5" step="0.0001" min="0" placeholder="0.0221"></td>
+                  </tr>
+                  <tr><th>α (mN/m)</th>
+                    <td class="alpha-cell" id="imprAlpha1">—</td><td class="alpha-cell" id="imprAlpha2">—</td>
+                    <td class="alpha-cell" id="imprAlpha3">—</td><td class="alpha-cell" id="imprAlpha4">—</td>
+                    <td class="alpha-cell" id="imprAlpha5">—</td>
+                  </tr>
+                </thead>
+              </table>
+              </div>
+              <div class="result-card" id="imprResult"></div>
+            </div>
+          </div>
+          <div class="data-actions">
+            <button class="btn btn-success" id="btnCompare">计算两组表面张力系数</button>
+            <button class="btn btn-outline" id="btnResetCompare">清空全部数据</button>
+          </div>
+          <!-- Highlight Banner -->
+          <div class="highlight-banner" id="compareBanner">
+            <div class="banner-icon">🏆</div>
+            <div class="banner-title" id="bannerTitle">改进型装置将相对误差降低了约 75%</div>
+            <div class="banner-detail" id="bannerDetail"></div>
+          </div>
+        </div>
+
+        <!-- ===== STEP 3: 探究实验A — 温度的影响 ===== -->
+        <div class="step-card" id="step3Card">
+          <div class="step-header">
+            <span class="step-badge">3</span>
+            <span class="step-title">探究实验A — 温度对表面张力系数的影响</span>
+          </div>
+          <div class="collapse-toggle" id="collapseTempToggle">
+            <span class="collapse-arrow">▶</span> 展开/收起温度探究实验
+          </div>
+          <div class="collapse-body" id="collapseTempBody">
+            <div class="table-scroll" style="margin-top:12px;">
+            <table class="data-table">
+              <thead>
+                <tr><th>温度 (°C)</th><th>20.0</th><th>22.5</th><th>25.0</th><th>27.5</th><th>30.0</th></tr>
+                <tr><th>α 测量平均值 (mN/m)</th>
+                  <td><input type="number" class="temp-input" id="temp20" step="0.01" min="0" placeholder="72.8"></td>
+                  <td><input type="number" class="temp-input" id="temp22" step="0.01" min="0" placeholder="71.5"></td>
+                  <td><input type="number" class="temp-input" id="temp25" step="0.01" min="0" placeholder="70.2"></td>
+                  <td><input type="number" class="temp-input" id="temp27" step="0.01" min="0" placeholder="68.9"></td>
+                  <td><input type="number" class="temp-input" id="temp30" step="0.01" min="0" placeholder="67.5"></td>
+                </tr>
+              </thead>
+            </table>
+            </div>
+            <div class="data-actions" style="margin-top:10px;">
+              <button class="btn btn-primary" id="btnTempChart">绘制温度-张力关系图</button>
+            </div>
+            <div class="mini-chart-wrap"><canvas id="tempChart"></canvas></div>
+            <div class="auto-conclusion success" id="tempConclusion" style="display:none;">
+              ✅ 结论：25℃ 为该实验仪器模型的最优适配温度
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== STEP 4: 探究实验B — 三角圆环厚度的影响 ===== -->
+        <div class="step-card" id="step4Card">
+          <div class="step-header">
+            <span class="step-badge">4</span>
+            <span class="step-title">探究实验B — 三角圆环厚度对测量精度的影响</span>
+          </div>
+          <div class="collapse-toggle" id="collapseThickToggle">
+            <span class="collapse-arrow">▶</span> 展开/收起厚度探究实验
+          </div>
+          <div class="collapse-body" id="collapseThickBody">
+            <div class="table-scroll" style="margin-top:12px;">
+            <table class="data-table">
+              <thead>
+                <tr><th>厚度 (mm)</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+                <tr><th>F_max 拉力极值 (N)</th>
+                  <td><input type="number" class="thick-input" id="thick1" step="0.0001" min="0" placeholder="0.0225"></td>
+                  <td><input type="number" class="thick-input" id="thick2" step="0.0001" min="0" placeholder="0.0219"></td>
+                  <td><input type="number" class="thick-input" id="thick3" step="0.0001" min="0" placeholder="0.0235"></td>
+                  <td><input type="number" class="thick-input" id="thick4" step="0.0001" min="0" placeholder="0.0252"></td>
+                </tr>
+                <tr><th>α (mN/m)</th>
+                  <td class="alpha-cell" id="thickAlpha1">—</td><td class="alpha-cell" id="thickAlpha2">—</td>
+                  <td class="alpha-cell" id="thickAlpha3">—</td><td class="alpha-cell" id="thickAlpha4">—</td>
+                </tr>
+                <tr><th>与标准值偏差</th>
+                  <td class="alpha-cell" id="thickDev1">—</td><td class="alpha-cell" id="thickDev2">—</td>
+                  <td class="alpha-cell" id="thickDev3">—</td><td class="alpha-cell" id="thickDev4">—</td>
+                </tr>
+              </thead>
+            </table>
+            </div>
+            <div class="data-actions" style="margin-top:10px;">
+              <button class="btn btn-primary" id="btnThickCalc">计算厚度-精度关系</button>
+            </div>
+            <div class="auto-conclusion success" id="thickConclusion" style="display:none;">
+              ✅ 结论：2mm 厚度的三角圆环测量精度最高，系统稳定性最优
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /tab-panels -->
+</div><!-- /app-shell -->
+
+<!-- QR Code Float Button -->
+<button class="qr-float-btn" id="qrFloatBtn" title="分享此页面">📱</button>
+
+<!-- QR Code Modal -->
+<div class="qr-modal-overlay" id="qrOverlay">
+  <div class="qr-modal">
+    <h3>📱 扫码即可使用</h3>
+    <p class="qr-url" id="qrUrl">—</p>
+    <div id="qrCode"></div>
+    <button class="qr-close" id="qrClose">关闭</button>
+  </div>
+</div>
+
+<script>
+(function() {
+'use strict';
+
+// ==================== LIQUID DATA DICTIONARY ====================
+// Physics: α(mN/m) = K(N/mV) * U(V) * 10⁹ / (π * (D₁ + D₂)(mm))
+// All voltage values in Volts (raw sensor readings, 0.19–0.22 V range)
+const LIQUIDS = {
+  water: {
+    name: '实验数据拟合专案',
+    color: '#4da6ff',
+    colorRGBA: 'rgba(77,166,255,0.42)',
+    filmRGBA: 'rgba(77,166,255,0.30)',
+    referenceAlpha: 72.8,
+    breakingDisplacement: 47.415,
+    maxVoltageTheoretical: 0.2187,
+    baselineVoltage: 0.1942
+  }
+};
+
+// ==================== GLOBAL STATE ====================
+const state = {
+  selectedLiquid: 'water',
+  activeTab: 'simulation',
+  sim: {
+    phase: 'idle',
+    platformY: 360,
+    ringY: 200,
+    liquidSurfaceY: 270,
+    currentVoltage: 0.1900,
+    maxVoltage: 0,
+    displacement: 0,
+    breakDisplacement: 0,
+    postBreakDisp: 0,
+    filmIntact: true,
+    ringSubmerged: false,
+    breakProgress: 0,
+    breakStartTime: 0,
+    autoZeroStartTime: 0,
+    contactStartTime: 0,
+    pullStartPlatformY: 0,
+    chartData: { t: [], V: [] },
+    animationId: null,
+    lastTimestamp: 0
+  }
+};
+
+// ==================== DOM REFS ====================
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+const mainCanvas = $('#mainCanvas');
+const ctx = mainCanvas.getContext('2d');
+const liveVoltage = $('#liveVoltage');
+const voltSpan = liveVoltage.querySelector('span');
+const statusText = $('#statusText');
+const liquidSelect = $('#liquidSelect');
+const refLiquidSelect = $('#refLiquid');
+const btnAutoRun = $('#btnAutoRun');
+const btnReset = $('#btnReset');
+const btnSubmitQuiz = $('#btnSubmitQuiz');
+const quizFeedback = $('#quizFeedback');
+
+// ---- Data Panel DOM Refs ----
+const tipsBar = $('#tipsBar');
+const tipsText = $('#tipsText');
+const tipsClose = $('#tipsClose');
+const btnMagicLoad = $('#btnMagicLoad');
+const instrumentSelect = $('#instrumentSelect');
+const btnUncertainty = $('#btnUncertainty');
+const btnCompare = $('#btnCompare');
+const btnResetCompare = $('#btnResetCompare');
+const btnTempChart = $('#btnTempChart');
+const btnThickCalc = $('#btnThickCalc');
+const compareBanner = $('#compareBanner');
+const bannerTitle = $('#bannerTitle');
+const bannerDetail = $('#bannerDetail');
+const collapseTempToggle = $('#collapseTempToggle');
+const collapseTempBody = $('#collapseTempBody');
+const collapseThickToggle = $('#collapseThickToggle');
+const collapseThickBody = $('#collapseThickBody');
+const tempConclusion = $('#tempConclusion');
+const thickConclusion = $('#thickConclusion');
+const uncertaintyResults = $('#uncertaintyResults');
+const tradResult = $('#tradResult');
+const imprResult = $('#imprResult');
+
+// ==================== TAB MANAGER ====================
+const TabManager = {
+  switchTo(tabName) {
+    state.activeTab = tabName;
+    $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+    $$('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tabName));
+  }
+};
+
+$$('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => TabManager.switchTo(btn.dataset.tab));
+});
+
+// ==================== CHART.JS ====================
+const chartCtxEl = $('#voltageChart');
+let chart = null;
+if (typeof Chart !== 'undefined' && chartCtxEl) {
+  const chartCtx2d = chartCtxEl.getContext('2d');
+  chart = new Chart(chartCtx2d, {
+    type: 'line',
+    data: {
+      datasets: [{
+        label: 'ΔU (V)',
+        data: [],
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59,130,246,0.07)',
+        fill: true,
+        pointRadius: 0,
+        borderWidth: 2.2,
+        tension: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      parsing: false,
+      scales: {
+        x: {
+          type: 'linear',
+          title: { display: true, text: '位移 (mm)', color: '#64748b' },
+          min: 0, max: 72,
+          grid: { color: '#e2e8f0' }
+        },
+        y: {
+          type: 'linear',
+          title: { display: true, text: '电压 (V)', color: '#64748b' },
+          min: 0.19, max: 0.23,
+          grid: { color: '#e2e8f0' }
+        }
+      },
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } }
+      },
+      interaction: { mode: 'nearest', axis: 'x', intersect: false }
+    }
+  });
+}
+
+function updateChartAxes() {
+  if (!chart) return;
+  const lq = LIQUIDS[state.selectedLiquid];
+  chart.options.scales.x.max = Math.ceil(lq.breakingDisplacement * 1.5);
+  chart.options.scales.y.min = 0.19;
+  chart.options.scales.y.max = 0.23;
+}
+
+function clearChart() {
+  if (!chart) return;
+  chart.data.datasets[0].data = [];
+  chart.update('none');
+}
+
+function syncChartFromState() {
+  if (!chart) return;
+  const s = state.sim;
+  chart.data.datasets[0].data = s.chartData.V.map((v, i) => ({ x: s.chartData.t[i], y: v }));
+  chart.update('none');
+}
+
+// ==================== CANVAS RENDERER (600×450) ====================
+const Renderer = {
+
+  /** Draw a vector arrow from (x1,y1) to (x2,y2). */
+  drawArrow(ctx2d, x1, y1, x2, y2, color, lw) {
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 1) return;
+    const ux = dx / len, uy = dy / len;
+    const tipSize = Math.min(8, len * 0.35);
+
+    ctx2d.save();
+    ctx2d.strokeStyle = color;
+    ctx2d.fillStyle = color;
+    ctx2d.lineWidth = lw;
+    ctx2d.lineCap = 'round';
+    ctx2d.beginPath();
+    ctx2d.moveTo(x1, y1);
+    ctx2d.lineTo(x2 - ux * tipSize, y2 - uy * tipSize);
+    ctx2d.stroke();
+    // arrowhead
+    ctx2d.beginPath();
+    ctx2d.moveTo(x2, y2);
+    ctx2d.lineTo(x2 - ux * tipSize + uy * tipSize * 0.55, y2 - uy * tipSize - ux * tipSize * 0.55);
+    ctx2d.lineTo(x2 - ux * tipSize - uy * tipSize * 0.55, y2 - uy * tipSize + ux * tipSize * 0.55);
+    ctx2d.closePath();
+    ctx2d.fill();
+    ctx2d.restore();
+  },
+
+  draw(ctx2d, st) {
+    const W = 600, H = 450;
+    ctx2d.clearRect(0, 0, W, H);
+    const s = st.sim;
+    const lq = LIQUIDS[st.selectedLiquid];
+
+    // L0: Background
+    const bgGrad = ctx2d.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#f8fafc');
+    bgGrad.addColorStop(0.55, '#e2e8f0');
+    bgGrad.addColorStop(1, '#cbd5e1');
+    ctx2d.fillStyle = bgGrad;
+    ctx2d.fillRect(0, 0, W, H);
+
+    // L1: Sensor mount
+    ctx2d.fillStyle = '#374151';
+    ctx2d.fillRect(275, 34, 50, 24);
+    ctx2d.fillStyle = '#4b5563';
+    ctx2d.fillRect(279, 38, 42, 16);
+    ctx2d.strokeStyle = '#6b7280';
+    ctx2d.lineWidth = 0.7;
+    ctx2d.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const sx = 283 + i * 7;
+      ctx2d.moveTo(sx, 40);
+      ctx2d.lineTo(sx + 3, 47);
+      ctx2d.lineTo(sx + 6, 40);
+    }
+    ctx2d.stroke();
+    ctx2d.fillStyle = '#64748b';
+    ctx2d.font = '8px sans-serif';
+    ctx2d.textAlign = 'center';
+    ctx2d.fillText('硅压阻力敏传感器', 300, 66);
+
+    // L2: Connecting rod
+    ctx2d.strokeStyle = '#9ca3af';
+    ctx2d.lineWidth = 1.8;
+    ctx2d.beginPath();
+    ctx2d.moveTo(300, 56);
+    ctx2d.lineTo(300, s.ringY - 4);
+    ctx2d.stroke();
+
+    // L3: Lift platform
+    const px = 140, py = s.platformY, pw = 320, ph = 24;
+    ctx2d.fillStyle = '#6b7280';
+    ctx2d.fillRect(px, py, pw, ph);
+    ctx2d.fillStyle = '#4b5563';
+    ctx2d.fillRect(px, py + 7, pw, 2.5);
+    ctx2d.fillRect(px, py + 15, pw, 2.5);
+    ctx2d.fillStyle = '#9ca3af';
+    ctx2d.fillRect(px + 24, py + ph, 14, H - py - ph);
+    ctx2d.fillRect(px + pw - 38, py + ph, 14, H - py - ph);
+    ctx2d.fillStyle = '#374151';
+    ctx2d.font = '10px sans-serif';
+    ctx2d.textAlign = 'center';
+    ctx2d.fillText('升降平台', 300, Math.min(py + ph + 14, H - 6));
+
+    // L4: Beaker
+    const bx = 190, bw = 190, bh = 130;
+    const by = py - bh;
+    ctx2d.fillStyle = 'rgba(255,255,255,0.30)';
+    ctx2d.fillRect(bx, by, bw, bh);
+    ctx2d.strokeStyle = '#9ca3af';
+    ctx2d.lineWidth = 2.5;
+    ctx2d.strokeRect(bx, by, bw, bh);
+    ctx2d.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx2d.fillRect(bx + 3, by + 5, 40, bh - 10);
+    ctx2d.fillText('烧杯', bx + bw / 2, by - 6);
+
+    // L5: Liquid fill — flat surface
+    const liqTop = s.liquidSurfaceY;
+    const liqBot = py - 4;
+    const cx = 300;
+
+    if (liqTop < liqBot) {
+      ctx2d.fillStyle = lq.colorRGBA;
+      ctx2d.fillRect(bx + 3, liqTop, bw - 6, liqBot - liqTop);
+    }
+    ctx2d.strokeStyle = lq.color;
+    ctx2d.lineWidth = 2;
+    ctx2d.beginPath();
+    ctx2d.moveTo(bx + 5, liqTop);
+    ctx2d.quadraticCurveTo(bx + bw / 2, liqTop - 4, bx + bw - 5, liqTop);
+    ctx2d.stroke();
+
+    // L6: Ring helper
+    const drawRing = (y, alpha) => {
+      ctx2d.save();
+      ctx2d.globalAlpha = alpha;
+      ctx2d.strokeStyle = '#c9964c';
+      ctx2d.lineWidth = 2.5;
+      ctx2d.beginPath();
+      ctx2d.ellipse(300, y, 40, 5.5, 0, 0, Math.PI * 2);
+      ctx2d.stroke();
+      ctx2d.strokeStyle = '#d4a574';
+      ctx2d.lineWidth = 1.4;
+      ctx2d.beginPath();
+      ctx2d.ellipse(300, y, 36, 3.5, 0, 0, Math.PI * 2);
+      ctx2d.stroke();
+      ctx2d.restore();
+    };
+
+    const ringAboveLiquid = s.ringY <= liqTop + 3;
+
+    if (!ringAboveLiquid && s.phase !== 'pulling' && s.phase !== 'breaking') {
+      drawRing(s.ringY, 0.22);
+    }
+
+    // L7: Ring on top
+    if (ringAboveLiquid || s.phase === 'pulling' || s.phase === 'breaking') {
+      drawRing(s.ringY, 1.0);
+    }
+
+    // L8: Liquid film — inward-curving waist, bottom merges into liquid body
+    if ((s.phase === 'pulling' || s.phase === 'breaking') && s.displacement > 0.03 && s.filmIntact) {
+      const ringBot = s.ringY + 2;
+      const ft = ringBot;
+      const filmBotY = liqTop + 5;
+      const midY = (ft + filmBotY) / 2;
+
+      // Three widths: top (ring connection), waist (narrowest), bottom (merges into liquid)
+      const topW = 38;
+      const botW = 44;
+      const waistW = Math.max(18, 34 - s.displacement * 0.40);
+      ctx2d.fillStyle = lq.filmRGBA;
+      ctx2d.beginPath();
+      // Left inward curve: top → waist → bottom
+      ctx2d.moveTo(300 - topW, ft);
+      ctx2d.quadraticCurveTo(300 - waistW, midY, 300 - botW, filmBotY);
+      // Bottom: flat, extends into liquid body for seamless overlap
+      ctx2d.lineTo(300 + botW, filmBotY);
+      // Right inward curve: bottom → waist → top
+      ctx2d.quadraticCurveTo(300 + waistW, midY, 300 + topW, ft);
+      ctx2d.closePath();
+      ctx2d.fill();
+      ctx2d.strokeStyle = lq.color;
+      ctx2d.lineWidth = 1;
+      ctx2d.stroke();
+    }
+
+    // L9: Breaking splash
+    if (s.phase === 'breaking' && !s.filmIntact) {
+      const splashT = s.breakProgress;
+      ctx2d.fillStyle = lq.colorRGBA;
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const dist = splashT * 20;
+        const sx = 300 + Math.cos(angle) * dist;
+        const sy = s.ringY + Math.sin(angle) * dist * 0.55;
+        ctx2d.beginPath();
+        ctx2d.arc(sx, sy, 2.8 * (1 - splashT * 0.75), 0, Math.PI * 2);
+        ctx2d.fill();
+      }
+    }
+
+    // ---- FORCE ANALYSIS VECTORS (Task 3) ----
+    // Only show during pulling phase
+    if (s.phase === 'pulling' && s.displacement > 0.1) {
+      const ringX = 300, ringY = s.ringY;
+      const baseLen = 28;
+      const forceLen = baseLen * Math.max(0.5, 1 + ((s.currentVoltage - 0.19) * 200));
+
+      // T₁ — upward pull from sensor (red)
+      this.drawArrow(ctx2d, ringX, ringY, ringX, ringY - forceLen, '#dc2626', 2.6);
+
+      // G — total gravity downward (red)
+      this.drawArrow(ctx2d, ringX, ringY, ringX, ringY + forceLen * 0.6, '#dc2626', 2.6);
+
+      // f — surface tension (downward-diagonal from ring left edge)
+      this.drawArrow(ctx2d, ringX - 36, ringY - 2, ringX - 36 - forceLen * 0.5, ringY - 2 + forceLen * 0.5, '#dc2626', 2.2);
+      // f — surface tension (downward-diagonal from ring right edge)
+      this.drawArrow(ctx2d, ringX + 36, ringY - 2, ringX + 36 + forceLen * 0.5, ringY - 2 + forceLen * 0.5, '#dc2626', 2.2);
+
+      // Labels
+      ctx2d.fillStyle = '#dc2626';
+      ctx2d.font = 'bold 11px sans-serif';
+      ctx2d.textAlign = 'center';
+      ctx2d.fillText('T₁', ringX + 14, ringY - forceLen - 4);
+      ctx2d.fillText('G', ringX + 14, ringY + forceLen * 0.6 + 12);
+      ctx2d.textAlign = 'right';
+      ctx2d.fillText('f', ringX - 42 - forceLen * 0.5, ringY + forceLen * 0.4);
+      ctx2d.textAlign = 'left';
+      ctx2d.fillText('f', ringX + 42 + forceLen * 0.5, ringY + forceLen * 0.4);
+    }
+
+    // L10: Digital voltmeter
+    const vx = 430, vy = 15, vw = 140, vh = 62;
+    ctx2d.fillStyle = '#0f172a';
+    ctx2d.fillRect(vx, vy, vw, vh);
+    ctx2d.strokeStyle = '#334155';
+    ctx2d.lineWidth = 2;
+    ctx2d.strokeRect(vx, vy, vw, vh);
+    ctx2d.fillStyle = 'rgba(52,211,153,0.05)';
+    ctx2d.fillRect(vx + 8, vy + 14, vw - 16, 3);
+    ctx2d.fillRect(vx + 8, vy + 30, vw - 16, 3);
+    ctx2d.fillRect(vx + 8, vy + 46, vw - 16, 3);
+
+    let displayVoltage = s.currentVoltage;
+    if (s.phase === 'autoZero') displayVoltage = 0;
+    ctx2d.fillStyle = '#34d399';
+    ctx2d.font = 'bold 28px "JetBrains Mono","Courier New",monospace';
+    ctx2d.textAlign = 'right';
+    ctx2d.fillText(displayVoltage.toFixed(4), vx + vw - 14, vy + 44);
+    ctx2d.fillStyle = '#6ee7b7';
+    ctx2d.font = '11px sans-serif';
+    ctx2d.textAlign = 'left';
+    ctx2d.fillText('V', vx + vw - 10, vy + 13);
+
+    if (s.phase === 'autoZero') {
+      ctx2d.fillStyle = '#fbbf24';
+      ctx2d.font = 'bold 11px sans-serif';
+      ctx2d.textAlign = 'center';
+      ctx2d.fillText('ZERO', vx + vw / 2, vy + 12);
+    }
+
+    // L11: Labels and arrows
+    ctx2d.fillStyle = '#374151';
+    ctx2d.font = '10px sans-serif';
+    ctx2d.textAlign = 'center';
+    ctx2d.fillText('金属环', 342, s.ringY + 4);
+
+    if (s.phase === 'immersing') {
+      ctx2d.fillStyle = '#1e3a8a';
+      ctx2d.font = '18px sans-serif';
+      ctx2d.fillText('▲', 370, py + ph / 2 + 6);
+    } else if (s.phase === 'pulling') {
+      ctx2d.fillStyle = '#dc2626';
+      ctx2d.font = '18px sans-serif';
+      ctx2d.fillText('▼', 370, py + ph / 2 + 6);
+    }
+  },
+
+  drawStatic() {
+    this.draw(ctx, state);
+  }
+};
+
+// ==================== PHYSICS MODEL (Real-data 3rd-order polynomial fit) ====================
+// Hardcoded polynomial coefficients from real experimental data fitting.
+// V(x) = A·x³ + B·x² + C·x + D  (V in Volts, x in mm)
+// R² > 0.999 拟合优度
+const PHYSICS_POLY = {
+  A: -2.28237010e-08,
+  B: -1.01024125e-06,
+  C:  0.00028327,
+  D:  0.20949279
+};
+
+const PhysicsModel = {
+  getVoltageCurve(displacement, liquidType) {
+    const lq = LIQUIDS[liquidType];
+    const xBreak = lq.breakingDisplacement;
+    if (displacement < xBreak) {
+      const x = displacement;
+      const v = PHYSICS_POLY.A * Math.pow(x, 3) + PHYSICS_POLY.B * Math.pow(x, 2) + PHYSICS_POLY.C * x + PHYSICS_POLY.D;
+      return { voltage: v, broken: false };
+    } else {
+      return { voltage: lq.baselineVoltage, broken: true };
+    }
+  }
+};
+
+// ==================== SIMULATION ENGINE ====================
+const SimEngine = {
+  PLATFORM_IDLE_Y: 360,
+  PLATFORM_UP_Y: 275,
+  RING_REST_Y: 200,
+  IMMERSE_SPEED: 55,
+  PULL_SPEED: 8,
+  MAX_VISUAL_STRETCH: 35,
+  AUTOZERO_DURATION: 0.6,
+  CONTACT_DURATION: 0.35,
+
+  start() {
+    const s = state.sim;
+    if (s.phase !== 'idle' && s.phase !== 'done') return;
+
+    s.phase = 'autoZero';
+    s.platformY = this.PLATFORM_IDLE_Y;
+    s.ringY = this.RING_REST_Y;
+    s.currentVoltage = 0.1900;
+    s.maxVoltage = 0;
+    s.displacement = 0;
+    s.breakDisplacement = 0;
+    s.postBreakDisp = 0;
+    s.filmIntact = true;
+    s.ringSubmerged = false;
+    s.breakProgress = 0;
+    s.chartData = { t: [], V: [] };
+    s.lastTimestamp = 0;
+    s.autoZeroStartTime = performance.now();
+    this.updateLiquidSurface();
+
+    clearChart();
+    updateChartAxes();
+
+    btnAutoRun.disabled = true;
+    liquidSelect.disabled = true;
+    statusText.textContent = '传感器调零中...';
+    liveVoltage.classList.add('pulsing');
+
+    s.lastTimestamp = performance.now();
+    s.animationId = requestAnimationFrame((t) => this.tick(t));
+  },
+
+  reset() {
+    const s = state.sim;
+    if (s.animationId) { cancelAnimationFrame(s.animationId); s.animationId = null; }
+    s.phase = 'idle';
+    s.platformY = this.PLATFORM_IDLE_Y;
+    s.ringY = this.RING_REST_Y;
+    s.currentVoltage = 0.1900;
+    s.maxVoltage = 0;
+    s.displacement = 0;
+    s.breakDisplacement = 0;
+    s.postBreakDisp = 0;
+    s.filmIntact = true;
+    s.ringSubmerged = false;
+    s.breakProgress = 0;
+    s.chartData = { t: [], V: [] };
+    this.updateLiquidSurface();
+
+    clearChart();
+    btnAutoRun.disabled = false;
+    liquidSelect.disabled = false;
+    liveVoltage.classList.remove('pulsing');
+    if (voltSpan) voltSpan.textContent = '0.1900';
+    statusText.textContent = '准备就绪。点击"开始自动演示"启动实验。';
+    Renderer.drawStatic();
+  },
+
+  updateLiquidSurface() {
+    state.sim.liquidSurfaceY = state.sim.platformY - 90;
+  },
+
+  tick(timestamp) {
+    const s = state.sim;
+    if (s.lastTimestamp === 0) s.lastTimestamp = timestamp;
+    let dt = (timestamp - s.lastTimestamp) / 1000;
+    if (dt > 0.05) dt = 0.033;
+    if (dt <= 0) dt = 0.016;
+    s.lastTimestamp = timestamp;
+
+    switch (s.phase) {
+      case 'autoZero':    this.tickAutoZero(); break;
+      case 'immersing':   this.tickImmersing(dt); break;
+      case 'contacting':  this.tickContacting(); break;
+      case 'pulling':     this.tickPulling(dt); break;
+      case 'breaking':    this.tickBreaking(dt); break;
+      case 'done':        this.finish(); return;
+    }
+
+    this.updateLiquidSurface();
+    if (voltSpan) voltSpan.textContent = s.currentVoltage.toFixed(4);
+    Renderer.draw(ctx, state);
+
+    // Sync chart every frame during active phases
+    if ((s.phase === 'pulling' || s.phase === 'breaking') && chart) {
+      syncChartFromState();
+    }
+
+    if (s.phase !== 'done') {
+      s.animationId = requestAnimationFrame((t) => this.tick(t));
+    }
+  },
+
+  tickAutoZero() {
+    const s = state.sim;
+    const elapsed = (performance.now() - s.autoZeroStartTime) / 1000;
+    s.currentVoltage = 0;
+    if (elapsed >= this.AUTOZERO_DURATION) {
+      s.phase = 'immersing';
+      liveVoltage.classList.remove('pulsing');
+      statusText.textContent = '平台上升中...金属环正在接近液面。';
+    }
+  },
+
+  tickImmersing(dt) {
+    const s = state.sim;
+    s.platformY -= this.IMMERSE_SPEED * dt;
+    s.ringY = this.RING_REST_Y;
+    s.currentVoltage = 0;
+
+    if (s.ringY >= s.liquidSurfaceY - 1) {
+      s.platformY = Math.max(s.platformY, s.ringY + 90 - 2);
+      s.ringSubmerged = true;
+      s.phase = 'contacting';
+      s.contactStartTime = performance.now();
+      s.pullStartPlatformY = s.platformY;
+      statusText.textContent = '金属环已接触液面，液膜形成中...';
+    }
+    if (s.platformY <= this.PLATFORM_UP_Y) {
+      s.platformY = this.PLATFORM_UP_Y;
+    }
+  },
+
+  tickContacting() {
+    const s = state.sim;
+    const elapsed = (performance.now() - s.contactStartTime) / 1000;
+    const spike = 0.005 * Math.exp(-Math.pow((elapsed - 0.08) / 0.06, 2));
+    s.currentVoltage = 0.1900 + spike;
+
+    if (elapsed >= this.CONTACT_DURATION) {
+      s.currentVoltage = PHYSICS_POLY.D;
+      s.phase = 'pulling';
+      s.pullStartPlatformY = s.platformY;
+      statusText.textContent = 'A-B段：平台下降中，液膜非线性拉伸，电压持续升高...';
+      liveVoltage.classList.add('pulsing');
+    }
+  },
+
+  // ---- A-B段: Nonlinear stretch ----
+  tickPulling(dt) {
+    const s = state.sim;
+    s.platformY += this.PULL_SPEED * dt;
+    const maxTravel = this.PLATFORM_IDLE_Y - this.PLATFORM_UP_Y;
+    const platformTravel = s.platformY - s.pullStartPlatformY;
+    const progress = Math.min(Math.max(platformTravel / maxTravel, 0), 1.0);
+
+    const lq = LIQUIDS[state.selectedLiquid];
+    s.displacement = progress * lq.breakingDisplacement * 1.35;
+    s.ringY = this.RING_REST_Y + progress * this.MAX_VISUAL_STRETCH;
+
+    const result = PhysicsModel.getVoltageCurve(s.displacement, state.selectedLiquid);
+    s.currentVoltage = result.voltage;
+    if (s.currentVoltage > s.maxVoltage) s.maxVoltage = s.currentVoltage;
+
+    // Push A-B curve point
+    s.chartData.t.push(s.displacement);
+    s.chartData.V.push(s.currentVoltage);
+
+    if (result.broken || s.platformY >= this.PLATFORM_IDLE_Y) {
+      s.maxVoltage = s.currentVoltage;
+      s.breakDisplacement = Math.min(s.displacement, lq.breakingDisplacement);
+
+      // ---- C段: Vertical drop at breaking displacement ----
+      // Push peak point at breakDisp
+      s.chartData.t.push(lq.breakingDisplacement);
+      s.chartData.V.push(lq.maxVoltageTheoretical);
+      // Drop to baseline at same x-coordinate
+      s.chartData.t.push(lq.breakingDisplacement);
+      s.chartData.V.push(lq.baselineVoltage);
+
+      s.phase = 'breaking';
+      s.breakStartTime = performance.now();
+      s.breakProgress = 0;
+      s.filmIntact = true;
+      s.postBreakDisp = lq.breakingDisplacement;
+      liveVoltage.classList.remove('pulsing');
+      statusText.textContent = 'C段：液膜破裂！电压垂直骤降至基线。D段：绘制断裂后基线...';
+    }
+  },
+
+  // ---- C→D段: Vertical drop + post-break baseline ----
+  tickBreaking(dt) {
+    const s = state.sim;
+    const elapsed = (performance.now() - s.breakStartTime) / 1000;
+    s.breakProgress = Math.min(elapsed / 0.5, 1.0);
+
+    // Film breaks after brief hold
+    if (elapsed > 0.08) s.filmIntact = false;
+
+    // Platform CONTINUES moving down to generate D段 baseline displacement
+    s.platformY += this.PULL_SPEED * dt;
+    const maxTravel = this.PLATFORM_IDLE_Y - this.PLATFORM_UP_Y;
+    const platformTravel = Math.max(0, s.platformY - s.pullStartPlatformY);
+    const lq = LIQUIDS[state.selectedLiquid];
+    // Displacement continues beyond break point
+    s.postBreakDisp = lq.breakingDisplacement + (platformTravel / maxTravel) * lq.breakingDisplacement * 0.12;
+    if (s.postBreakDisp < lq.breakingDisplacement) s.postBreakDisp = lq.breakingDisplacement;
+
+    // D段: push baseline data at increasing displacement, voltage stays at baseline
+    if (!s.filmIntact) {
+      const dResult = PhysicsModel.getVoltageCurve(s.postBreakDisp, state.selectedLiquid);
+      s.currentVoltage = dResult.voltage;
+      s.chartData.t.push(s.postBreakDisp);
+      s.chartData.V.push(dResult.voltage);
+
+      // Ring snaps back
+      const decayT = elapsed - 0.08;
+      const snapT = Math.min(decayT / 0.35, 1.0);
+      const snapEased = 1 - Math.pow(1 - snapT, 3);
+      const pulledY = this.RING_REST_Y + this.MAX_VISUAL_STRETCH;
+      s.ringY = pulledY + (this.RING_REST_Y - pulledY) * snapEased;
+    }
+
+    // Stop breaking after enough D段 baseline (~5mm beyond break)
+    const beyondBreak = Math.max(0, s.postBreakDisp - lq.breakingDisplacement);
+    if (s.breakProgress >= 1.0 || beyondBreak > 5.0) {
+      s.phase = 'done';
+    }
+  },
+
+  finish() {
+    const s = state.sim;
+    s.currentVoltage = 0.1900;
+    s.ringY = this.RING_REST_Y;
+    if (voltSpan) voltSpan.textContent = '0.1900';
+    liveVoltage.classList.remove('pulsing');
+    btnAutoRun.disabled = false;
+    liquidSelect.disabled = false;
+
+    const lq = LIQUIDS[state.selectedLiquid];
+    statusText.textContent =
+      `演示完成！U_max = ${s.maxVoltage.toFixed(4)} V（${lq.name}理论值 ≈ ${lq.maxVoltageTheoretical.toFixed(4)} V）。曲线已永久留存，可切换标签查看。`;
+
+    // Final chart sync — curve stays on screen permanently
+    syncChartFromState();
+
+    autoFillUmax(s.maxVoltage);
+    s.animationId = null;
+    Renderer.draw(ctx, state);
+  }
+};
+
+// ==================== AUTO-FILL ====================
+function autoFillUmax(voltage) {
+  // No longer auto-fills — the new Step 2 uses F_max (N) not U_max (V).
+  // This function is kept as a no-op to avoid breaking the simulation finish() call.
+}
+
+// ==================== EVENT HANDLERS ====================
+btnAutoRun.addEventListener('click', () => SimEngine.start());
+btnReset.addEventListener('click', () => SimEngine.reset());
+
+liquidSelect.addEventListener('change', () => {
+  state.selectedLiquid = liquidSelect.value;
+  refLiquidSelect.value = liquidSelect.value;
+  updateChartAxes();
+  if (state.sim.phase === 'idle' || state.sim.phase === 'done') {
+    Renderer.drawStatic();
+    // Keep existing chart data visible even when switching liquid in 'done' state
+  }
+});
+
+refLiquidSelect.addEventListener('change', () => {
+  // Independent reference for data processing
+});
+
+// ==================== QUIZ SYSTEM ====================
+const QUIZ_ANSWERS = { q1: 'B', q2: 'B', q3: 'B' };
+
+// Radio change: clear previous submit styling so user knows a new attempt is in progress
+document.querySelectorAll('.quiz-item input[type="radio"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const quizItem = radio.closest('.quiz-item');
+    // Hide explanation from previous submit
+    const explain = quizItem.querySelector('.quiz-explain');
+    if (explain) explain.classList.remove('show');
+    // Hide all hints from previous submit
+    quizItem.querySelectorAll('.option-hint').forEach(h => h.classList.remove('show'));
+    // Clear question-level highlight
+    quizItem.style.borderColor = '';
+    quizItem.style.background = '';
+    quizItem.classList.remove('correct', 'incorrect');
+    // Also hide feedback banner
+    quizFeedback.classList.remove('show');
+  });
+});
+
+// ---- Per-question full knowledge-point analysis ----
+const EXAMINE_CONTENT = {
+  q1: {
+    correct: 'B',
+    analysis: `
+      <div class="explain-title">📖 知识点：拉脱法公式分母 π(D₁+D₂) 的物理来源</div>
+      <p>拉脱法的核心原理是 <b>α = F / L</b>，其中 L 为液膜与金属环的总接触线长度。金属圆环具有内、外两个圆周面，液膜同时附着在这两个面上，因此：</p>
+      <p style="text-align:center;margin:8px 0;"><b>L = πD₁（外周长）+ πD₂（内周长）= π(D₁ + D₂)</b></p>
+      <p>这才是分母中使用 π(D₁+D₂) 而非单一周长的根本原因——它是物理受力分析的结果，而非经验凑数。</p>
+      <p class="explain-correct">✅ 正确选项 B：液体同时附着在环的内外侧表面，有效接触线总长为内外周长之和。</p>
+      <p class="explain-wrong" style="margin-top:8px;">❌ 常见误区：</p>
+      <ul>
+        <li><b>A：</b>误以为分母形式仅是"历史习惯"，忽略了公式背后严格的力学推导。</li>
+        <li><b>C：</b>混淆了周长与面积概念——D₁、D₂ 是直径（单位 mm），π(D₁+D₂) 是总周长（长度量纲），而非面积。</li>
+        <li><b>D：</b>认为公式只是凑数让结果匹配标准值，实际上拉脱法公式可从受力平衡严格导出。</li>
+      </ul>`
+  },
+  q2: {
+    correct: 'B',
+    analysis: `
+      <div class="explain-title">📖 知识点：金属环水平度与洁净度对实验的影响</div>
+      <p>实验要求金属环<b>严格水平</b>且<b>完全润湿（洁净）</b>，这是拉脱法成功的关键前提条件：</p>
+      <p style="text-align:center;margin:8px 0;"><b>润湿不均匀 → 有效接触线 ≠ π(D₁+D₂) → 系统误差</b></p>
+      <p>若环倾斜或有油污，部分表面无法被液体润湿，液膜在环上的实际附着线不再是完整圆周，公式中 L = π(D₁+D₂) 的前提被破坏，结果自然偏离。</p>
+      <p class="explain-correct">✅ 正确选项 B：润湿不均匀导致有效接触线长度偏离 π(D₁+D₂)，引入显著系统误差。</p>
+      <p class="explain-wrong" style="margin-top:8px;">❌ 常见误区：</p>
+      <ul>
+        <li><b>A：</b>低估了水平度/洁净度的影响——这不是"操作习惯"，而是决定实验成败的核心因素。</li>
+        <li><b>C：</b>环的自重可通过调零消除，与水平度无关。倾斜环影响的是润湿均匀性，而非自重。</li>
+        <li><b>D：</b>传感器防护是设备保护问题，与水平度/洁净度的实验精度意义完全不同。</li>
+      </ul>`
+  },
+  q3: {
+    correct: 'B',
+    analysis: `
+      <div class="explain-title">📖 知识点：U_max 的读取时机与表面张力系数的关系</div>
+      <p>拉脱法实验中，U_max 对应液膜<b>恰好断裂的瞬间</b>（C 点），此时拉力达到最大值。若操作者在液膜尚未完全拉断时读取：</p>
+      <p style="text-align:center;margin:8px 0;"><b>提前读数 → 电压 &lt; U_max → α ∝ U → α 偏小</b></p>
+      <p>由公式 <b>α = K · U_max · 10⁶ / [π(D₁+D₂)]</b> 可知，α 与 U_max 成正比。代入偏小的电压必然计算出偏小的表面张力系数，这是典型的操作误差。</p>
+      <p class="explain-correct">✅ 正确选项 B：提前读取的电压小于 U_max，导致计算值偏小。</p>
+      <p class="explain-wrong" style="margin-top:8px;">❌ 常见误区：</p>
+      <ul>
+        <li><b>A：</b>弄反了因果关系——液膜尚在说明还未达断裂点，此时拉力还在上升，读数偏小而非偏大。</li>
+        <li><b>C：</b>液膜拉断前后电压变化显著——断裂前持续上升至峰值，断裂瞬间垂直骤降，绝非"无差别"。</li>
+        <li><b>D：</b>结果完全可确定：提前读数必导致 U 偏小、α 偏小，不存在"无法确定"的情况。</li>
+      </ul>`
+  }
+};
+
+btnSubmitQuiz.addEventListener('click', () => {
+  let allAnswered = true;
+  let score = 0;
+
+  const questions = [
+    { name: 'q1', el: document.getElementById('quizQ1') },
+    { name: 'q2', el: document.getElementById('quizQ2') },
+    { name: 'q3', el: document.getElementById('quizQ3') }
+  ];
+
+  // Reset visual state
+  questions.forEach(q => {
+    q.el.classList.remove('correct', 'incorrect');
+    q.el.style.borderColor = '';
+    q.el.style.background = '';
+    const explain = document.getElementById('explainQ' + q.name.slice(1));
+    if (explain) explain.classList.remove('show');
+  });
+
+  // Validate & score
+  questions.forEach(q => {
+    const selected = document.querySelector(`input[name="${q.name}"]:checked`);
+    if (!selected) {
+      allAnswered = false;
+      q.el.style.borderColor = '#dc2626';
+      q.el.style.background = '#fef2f2';
+    } else if (selected.value === QUIZ_ANSWERS[q.name]) {
+      q.el.classList.add('correct');
+      score++;
+    } else {
+      q.el.classList.add('incorrect');
+    }
+  });
+
+  if (!allAnswered) {
+    quizFeedback.classList.add('show');
+    quizFeedback.style.background = '#fef2f2';
+    quizFeedback.style.color = '#991b1b';
+    quizFeedback.innerHTML = '<strong>请回答所有题目后再提交。</strong>';
+    return;
+  }
+
+  // Show per-option hints for the user's selections (only after submit)
+  questions.forEach(q => {
+    const selected = document.querySelector(`input[name="${q.name}"]:checked`);
+    const quizItem = q.el;
+    quizItem.querySelectorAll('.option-hint').forEach(h => h.classList.remove('show'));
+    if (selected) {
+      const hint = quizItem.querySelector(`.option-hint[data-for="${q.name}-${selected.value}"]`);
+      if (hint) hint.classList.add('show');
+    }
+  });
+
+  // Populate & show per-question knowledge-point analysis
+  questions.forEach(q => {
+    const explainEl = document.getElementById('explainQ' + q.name.slice(1));
+    if (explainEl && EXAMINE_CONTENT[q.name]) {
+      explainEl.innerHTML = EXAMINE_CONTENT[q.name].analysis;
+      explainEl.classList.add('show');
+    }
+  });
+
+  // Overall score feedback
+  let html = `<strong style="font-size:1.05rem;">得分：${score} / 3</strong>`;
+  if (score === 3) {
+    html += `<p style="margin:8px 0 0 0;">🎉 太棒了！你对拉脱法测量液体表面张力系数的核心原理掌握得很好。</p>`;
+  } else if (score === 2) {
+    html += `<p style="margin:8px 0 0 0;">👍 不错！请查看下方每道题的完整解析，巩固薄弱知识点。</p>`;
+  } else {
+    html += `<p style="margin:8px 0 0 0;">📚 建议仔细阅读下方每道题的完整解析，加深对拉脱法实验原理的理解。</p>`;
+  }
+
+  quizFeedback.classList.add('show');
+  quizFeedback.style.background = score === 3 ? '#f0fdf4' : score === 2 ? '#fffbeb' : '#fef2f2';
+  quizFeedback.style.color = score === 3 ? '#065f46' : score === 2 ? '#92400e' : '#991b1b';
+  quizFeedback.innerHTML = html;
+});
+
+// ==================== DATA PROCESSING — 4-Step Inquiry Dashboard ====================
+
+// ---- Instrument Database ----
+const INSTRUMENTS = {
+  traditional: { name: '传统三线吊环', d1: 50.9, d2: 44.8 },
+  improved:   { name: '改进型 2mm 三角圆环', d1: 49.720, d2: 45.716 }
+};
+
+// ---- Tips Bar System ----
+const TipsSystem = {
+  set(msg) { tipsText.textContent = msg; },
+  success(msg) { tipsBar.style.background = 'linear-gradient(135deg, #d1fae5, #ecfdf5)'; tipsBar.style.borderColor = '#86efac'; tipsBar.style.color = '#065f46'; tipsText.textContent = '✅ ' + msg; },
+  info(msg) { tipsBar.style.background = 'linear-gradient(135deg, #dbeafe, #e0e7ff)'; tipsBar.style.borderColor = '#93c5fd'; tipsBar.style.color = '#1e40af'; tipsText.textContent = '👋 ' + msg; },
+  warn(msg) { tipsBar.style.background = 'linear-gradient(135deg, #fffbeb, #fef3c7)'; tipsBar.style.borderColor = '#fcd34d'; tipsBar.style.color = '#92400e'; tipsText.textContent = '⚠️ ' + msg; },
+  reset() { this.info('欢迎！请先在【步骤 1】选择实验仪器开始探究。'); }
+};
+
+tipsClose.addEventListener('click', () => { tipsBar.style.display = 'none'; });
+
+// ---- Tooltip: all [?] icons already in HTML, CSS handles hover ----
+
+// ---- Collapse toggles ----
+collapseTempToggle.addEventListener('click', () => {
+  collapseTempToggle.classList.toggle('open');
+  collapseTempBody.classList.toggle('open');
+});
+collapseThickToggle.addEventListener('click', () => {
+  collapseThickToggle.classList.toggle('open');
+  collapseThickBody.classList.toggle('open');
+});
+
+// ---- Formula helper ----
+function calcAlpha(F, d1, d2) {
+  // α = F / (π * (D₁ + D₂))  * 1000  → mN/m
+  // F in N, D in mm
+  const denom = Math.PI * (d1 + d2) / 1000; // convert mm to m
+  return (F / denom) * 1000; // mN/m
+}
+
+// ==================== STEP 1: 常量录入与不确定度分析 ====================
+instrumentSelect.addEventListener('change', () => {
+  const inst = INSTRUMENTS[instrumentSelect.value];
+  if (inst) {
+    $('#d1').value = inst.d1;
+    $('#d2').value = inst.d2;
+    TipsSystem.info('仪器已选择：' + inst.name + '。外径/内径已自动填入，可点击"评估不确定度"。');
+  } else {
+    $('#d1').value = '';
+    $('#d2').value = '';
+    TipsSystem.info('请选择实验仪器。');
+  }
+});
+
+btnUncertainty.addEventListener('click', () => {
+  const d1 = parseFloat($('#d1').value);
+  const d2 = parseFloat($('#d2').value);
+  if (!instrumentSelect.value) {
+    TipsSystem.warn('请先在【步骤 1】顶部选择实验仪器。');
+    return;
+  }
+  if (isNaN(d1) || isNaN(d2) || d1 <= d2) {
+    TipsSystem.warn('外径/内径数据异常，请重新选择仪器。');
+    return;
+  }
+
+  // A类不确定度: u_A = σ / √n   (基于D₁+D₂的估值，标定精度 0.02mm)
+  // B类不确定度: u_B = Δ_仪 / √3  (游标卡尺示值误差 0.02mm)
+  const deltaInst = 0.02;
+  const uA = (deltaInst / Math.sqrt(5)).toFixed(4);
+  const uB = (deltaInst / Math.sqrt(3)).toFixed(4);
+  const uC = Math.sqrt(Math.pow(parseFloat(uA), 2) + Math.pow(parseFloat(uB), 2)).toFixed(4);
+  const nuEff = 4; // n-1, typical for 5 measurements
+
+  $('#uA').textContent = uA + ' mm';
+  $('#uB').textContent = uB + ' mm';
+  $('#uC').textContent = uC + ' mm';
+  $('#nuEff').textContent = nuEff + ' (n-1=4)';
+  uncertaintyResults.classList.add('show');
+  TipsSystem.success('不确定度分析完成！合成标准不确定度 u_c = ' + uC + ' mm。请继续【步骤 2】。');
+});
+
+// ==================== STEP 2: 核心测量与新旧仪器对比 ====================
+btnCompare.addEventListener('click', () => {
+  if (!instrumentSelect.value) {
+    TipsSystem.warn('请先在【步骤 1】选择实验仪器并完成常量录入。');
+    return;
+  }
+
+  // Read traditional inputs
+  const tradF = [];
+  for (let i = 1; i <= 5; i++) {
+    const val = parseFloat($('#trad' + i).value);
+    if (!isNaN(val) && val > 0) tradF.push(val);
+  }
+  // Read improved inputs
+  const imprF = [];
+  for (let i = 1; i <= 5; i++) {
+    const val = parseFloat($('#impr' + i).value);
+    if (!isNaN(val) && val > 0) imprF.push(val);
+  }
+
+  if (tradF.length < 3 || imprF.length < 3) {
+    TipsSystem.warn('【步骤 2】传统和改进仪器各需至少填写 3 组 F_max 值。请补全数据。');
+    return;
+  }
+
+  const tradD1 = INSTRUMENTS.traditional.d1;
+  const tradD2 = INSTRUMENTS.traditional.d2;
+  const imprD1 = INSTRUMENTS.improved.d1;
+  const imprD2 = INSTRUMENTS.improved.d2;
+  const refAlpha = LIQUIDS.water.referenceAlpha;
+
+  // Calculate α for each
+  const tradAlpha = tradF.map(f => calcAlpha(f, tradD1, tradD2));
+  const imprAlpha = imprF.map(f => calcAlpha(f, imprD1, imprD2));
+
+  const tradAvg = tradAlpha.reduce((a, b) => a + b, 0) / tradAlpha.length;
+  const imprAvg = imprAlpha.reduce((a, b) => a + b, 0) / imprAlpha.length;
+
+  const tradErr = Math.abs(tradAvg - refAlpha) / refAlpha * 100;
+  const imprErr = Math.abs(imprAvg - refAlpha) / refAlpha * 100;
+
+  // Fill result cells
+  for (let i = 1; i <= 5; i++) {
+    const tc = document.getElementById('tradAlpha' + i);
+    const ic = document.getElementById('imprAlpha' + i);
+    if (tc) tc.textContent = i <= tradAlpha.length ? tradAlpha[i - 1].toFixed(2) : '—';
+    if (ic) ic.textContent = i <= imprAlpha.length ? imprAlpha[i - 1].toFixed(2) : '—';
+  }
+
+  // Show per-instrument result cards
+  tradResult.innerHTML = `<strong>传统仪器结果</strong><br>
+    平均 ᾱ = <span class="val-highlight">${tradAvg.toFixed(2)}</span> mN/m<br>
+    相对误差：<span class="val-error">${tradErr.toFixed(2)}%</span>`;
+  tradResult.classList.add('show');
+
+  imprResult.innerHTML = `<strong>改进仪器结果</strong><br>
+    平均 ᾱ = <span class="val-highlight">${imprAvg.toFixed(2)}</span> mN/m<br>
+    相对误差：<span class="val-error">${imprErr.toFixed(2)}%</span>`;
+  imprResult.classList.add('show');
+
+  // Show highlight banner
+  const reduction = tradErr > 0 ? Math.round((1 - imprErr / tradErr) * 100) : 75;
+  bannerTitle.textContent = '改进型装置将相对误差降低了约 ' + reduction + '%';
+  bannerDetail.innerHTML =
+    `传统三线吊环：误差 <strong>${tradErr.toFixed(2)}%</strong> &nbsp;|&nbsp;
+     改进型 2mm 三角圆环：误差 <strong>${imprErr.toFixed(2)}%</strong><br>
+     <small>改进型环的三角截面设计使液体在环上的润湿更均匀，有效接触线长度更接近理论值 π(D₁+D₂)，显著降低了系统误差。</small>`;
+  compareBanner.classList.add('show');
+
+  TipsSystem.success('两组计算完成！改进型相对误差降低约 ' + reduction + '%。请继续【步骤 3】探究温度影响。');
+});
+
+btnResetCompare.addEventListener('click', () => {
+  for (let i = 1; i <= 5; i++) {
+    const ti = document.getElementById('trad' + i); if (ti) ti.value = '';
+    const ii = document.getElementById('impr' + i); if (ii) ii.value = '';
+    const tc = document.getElementById('tradAlpha' + i); if (tc) tc.textContent = '—';
+    const ic = document.getElementById('imprAlpha' + i); if (ic) ic.textContent = '—';
+  }
+  tradResult.innerHTML = ''; tradResult.classList.remove('show');
+  imprResult.innerHTML = ''; imprResult.classList.remove('show');
+  compareBanner.classList.remove('show');
+  TipsSystem.info('数据已清空。请重新输入传统与改进仪器的 5 组 F_max 值。');
+});
+
+// ==================== STEP 3: 探究实验A — 温度的影响 ====================
+let tempChart = null;
+
+btnTempChart.addEventListener('click', () => {
+  const temps = [20.0, 22.5, 25.0, 27.5, 30.0];
+  const ids = ['temp20', 'temp22', 'temp25', 'temp27', 'temp30'];
+  const values = ids.map(id => parseFloat(document.getElementById(id).value) || 0);
+
+  if (values.some(v => v <= 0)) {
+    TipsSystem.warn('请填写所有温度点的 α 测量平均值。');
+    return;
+  }
+
+  const ctx2 = document.getElementById('tempChart').getContext('2d');
+  if (tempChart) tempChart.destroy();
+
+  tempChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: temps.map(t => t + '°C'),
+      datasets: [{
+        label: 'α 测量值 (mN/m)',
+        data: values,
+        backgroundColor: temps.map(t =>
+          t === 25.0 ? 'rgba(5,150,105,0.75)' : 'rgba(59,130,246,0.55)'
+        ),
+        borderColor: temps.map(t =>
+          t === 25.0 ? '#059669' : '#3b82f6'
+        ),
+        borderWidth: 1.5,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom' },
+        annotation: !tempChart ? {} : undefined
+      },
+      scales: {
+        y: {
+          title: { display: true, text: 'α (mN/m)' },
+          beginAtZero: false,
+          min: Math.floor(Math.min(...values) - 2),
+          max: Math.ceil(Math.max(...values) + 2)
+        }
+      }
+    }
+  });
+
+  tempConclusion.style.display = 'inline-flex';
+  TipsSystem.success('温度探究图表已生成！25°C 为该仪器的最优适配温度。请继续【步骤 4】。');
+
+  // Ensure collapse is open
+  collapseTempToggle.classList.add('open');
+  collapseTempBody.classList.add('open');
+});
+
+// ==================== STEP 4: 探究实验B — 三角圆环厚度的影响 ====================
+btnThickCalc.addEventListener('click', () => {
+  const thickD1 = INSTRUMENTS.improved.d1;
+  const thickD2 = INSTRUMENTS.improved.d2;
+  const refAlpha = LIQUIDS.water.referenceAlpha;
+  const thicknesses = [1, 2, 3, 4];
+  const ids = ['thick1', 'thick2', 'thick3', 'thick4'];
+
+  const fValues = ids.map(id => parseFloat(document.getElementById(id).value));
+  if (fValues.some(v => isNaN(v) || v <= 0)) {
+    TipsSystem.warn('请填写所有 4 种厚度的 F_max 拉力极值。');
+    return;
+  }
+
+  const alphas = fValues.map(f => calcAlpha(f, thickD1, thickD2));
+  const deviations = alphas.map(a => Math.abs(a - refAlpha));
+
+  // Find best thickness (lowest deviation)
+  let bestIdx = 0;
+  for (let i = 1; i < deviations.length; i++) {
+    if (deviations[i] < deviations[bestIdx]) bestIdx = i;
+  }
+
+  for (let i = 1; i <= 4; i++) {
+    const ac = document.getElementById('thickAlpha' + i);
+    const dc = document.getElementById('thickDev' + i);
+    if (ac) ac.textContent = alphas[i - 1].toFixed(2);
+    if (dc) dc.textContent = deviations[i - 1].toFixed(2) + ' mN/m';
+  }
+
+  thickConclusion.style.display = 'inline-flex';
+  thickConclusion.innerHTML = `✅ 结论：<strong>${thicknesses[bestIdx]}mm</strong> 厚度的三角圆环测量精度最高（偏差仅 ${deviations[bestIdx].toFixed(2)} mN/m），系统稳定性最优`;
+
+  TipsSystem.success('厚度探究完成！' + thicknesses[bestIdx] + 'mm 厚度精度最高。全部 4 个步骤探究完毕。');
+
+  // Ensure collapse is open
+  collapseThickToggle.classList.add('open');
+  collapseThickBody.classList.add('open');
+});
+
+// ==================== MAGIC DEMO DATA LOADER ====================
+btnMagicLoad.addEventListener('click', () => {
+  // Step 1: Select improved instrument
+  instrumentSelect.value = 'improved';
+  $('#d1').value = INSTRUMENTS.improved.d1;
+  $('#d2').value = INSTRUMENTS.improved.d2;
+
+  // Step 2: Fill traditional and improved F_max values with realistic demo data
+  // α = F * 10⁶ / (π*(D₁+D₂)), for water α≈72.8 → F≈0.0219N
+  const tradDemo = [0.0228, 0.0215, 0.0224, 0.0231, 0.0212];
+  const imprDemo = [0.0219, 0.0217, 0.0220, 0.0218, 0.0221];
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('trad' + i).value = tradDemo[i - 1];
+    document.getElementById('impr' + i).value = imprDemo[i - 1];
+  }
+
+  // Step 3: Fill temperature data
+  const tempDemo = { temp20: 72.80, temp22: 71.52, temp25: 70.24, temp27: 68.91, temp30: 67.45 };
+  Object.keys(tempDemo).forEach(k => { document.getElementById(k).value = tempDemo[k]; });
+
+  // Step 4: Fill thickness data
+  const thickDemo = { thick1: 0.0225, thick2: 0.0219, thick3: 0.0235, thick4: 0.0252 };
+  Object.keys(thickDemo).forEach(k => { document.getElementById(k).value = thickDemo[k]; });
+
+  // Auto-trigger all calculations in sequence
+  TipsSystem.info('🪄 演示数据已载入！正在自动执行全部计算...');
+
+  // Trigger Step 1 uncertainty
+  if (btnUncertainty) btnUncertainty.click();
+
+  // Trigger Step 2 comparison (slight delay to let DOM update)
+  setTimeout(() => {
+    if (btnCompare) btnCompare.click();
+  }, 150);
+
+  // Trigger Step 3 temperature chart
+  setTimeout(() => {
+    if (btnTempChart) btnTempChart.click();
+  }, 350);
+
+  // Trigger Step 4 thickness
+  setTimeout(() => {
+    if (btnThickCalc) btnThickCalc.click();
+  }, 550);
+
+  // Final tip
+  setTimeout(() => {
+    TipsSystem.success('全部探究步骤演示完毕！您可以替换数据重新计算，或切换到其他标签页。');
+  }, 800);
+});
+
+// ==================== QR CODE SHARE ====================
+const qrFloatBtn = $('#qrFloatBtn');
+const qrOverlay = $('#qrOverlay');
+const qrClose = $('#qrClose');
+const qrUrl = $('#qrUrl');
+const qrCode = $('#qrCode');
+let qrGenerated = false;
+
+function getShareUrl() {
+  const href = window.location.href;
+  // If opened locally (file://), show a helpful message instead
+  if (href.startsWith('file://')) {
+    return null;
+  }
+  return href;
+}
+
+qrFloatBtn.addEventListener('click', () => {
+  qrOverlay.classList.add('show');
+  const url = getShareUrl();
+  if (!url) {
+    qrUrl.textContent = '⚠️ 请将本文件部署到 GitHub Pages 或任意 HTTP 服务器后，扫码即可使用';
+    qrCode.innerHTML = '<p style="color:#64748b;font-size:0.82rem;">QR 码需在 HTTP 环境下生成<br>推荐：GitHub Pages（免费）</p>';
+    return;
+  }
+  qrUrl.textContent = url;
+  if (!qrGenerated && typeof QRCode !== 'undefined') {
+    qrCode.innerHTML = '';
+    new QRCode(qrCode, {
+      text: url,
+      width: 200,
+      height: 200,
+      colorDark: '#1e3a8a',
+      colorLight: '#ffffff'
+    });
+    qrGenerated = true;
+  }
+});
+
+qrClose.addEventListener('click', () => {
+  qrOverlay.classList.remove('show');
+});
+
+qrOverlay.addEventListener('click', (e) => {
+  if (e.target === qrOverlay) {
+    qrOverlay.classList.remove('show');
+  }
+});
+
+// ==================== INIT ====================
+function init() {
+  updateChartAxes();
+  Renderer.drawStatic();
+}
+
+init();
+
+})();
+</script>
+
+</body>
+</html>
