@@ -1544,7 +1544,7 @@ const Renderer = {
     if ((s.phase === 'pulling' || s.phase === 'breaking') && s.displacement > 0.03 && s.filmIntact) {
       const ringBot = s.ringY + 2;
       const ft = ringBot;
-      const filmBotY = liqTop + 5;
+      const filmBotY = liqTop;
       const midY = (ft + filmBotY) / 2;
 
       // Three widths: top (ring connection), waist (narrowest), bottom (merges into liquid)
@@ -1582,34 +1582,43 @@ const Renderer = {
       }
     }
 
-    // ---- FORCE ANALYSIS VECTORS (Task 3) ----
-    // Only show during pulling phase
+    // ---- FORCE ANALYSIS VECTORS ----
+    // Only show during pulling phase.
+    // Surface tension f acts tangentially along the liquid film. At the ring edges,
+    // the film curves outward and downward — f pulls the ring outward+down on each
+    // side. As displacement increases, the film stretches and f becomes nearly vertical.
     if (s.phase === 'pulling' && s.displacement > 0.1) {
       const ringX = 300, ringY = s.ringY;
-      const baseLen = 28;
+      const baseLen = 22;
       const forceLen = baseLen * Math.max(0.5, 1 + ((s.currentVoltage - 0.19) * 200));
 
-      // T₁ — upward pull from sensor (red)
+      const progress = Math.min(s.displacement / lq.breakingDisplacement, 1.0);
+      const angleDeg = 30 * (1 - progress) + 3; // 33° at start → 3° near breaking
+      const angleRad = angleDeg * Math.PI / 180;
+      // f (surface tension) is smaller than G (gravity) — per-side tension < total weight
+      const fLen = forceLen * 0.32;
+      const fDx = Math.sin(angleRad) * fLen;  // horizontal component
+      const fDy = Math.cos(angleRad) * fLen;  // vertical component (downward)
+
+      // T₁ — upward pull from sensor (vertical, ring center)
       this.drawArrow(ctx2d, ringX, ringY, ringX, ringY - forceLen, '#dc2626', 2.6);
 
-      // G — total gravity downward (red)
-      this.drawArrow(ctx2d, ringX, ringY, ringX, ringY + forceLen * 0.6, '#dc2626', 2.6);
+      // G — gravity downward (vertical, ring center) — larger than f
+      this.drawArrow(ctx2d, ringX, ringY, ringX, ringY + forceLen * 0.58, '#dc2626', 2.6);
 
-      // f — surface tension (downward-diagonal from ring left edge)
-      this.drawArrow(ctx2d, ringX - 36, ringY - 2, ringX - 36 - forceLen * 0.5, ringY - 2 + forceLen * 0.5, '#dc2626', 2.2);
-      // f — surface tension (downward-diagonal from ring right edge)
-      this.drawArrow(ctx2d, ringX + 36, ringY - 2, ringX + 36 + forceLen * 0.5, ringY - 2 + forceLen * 0.5, '#dc2626', 2.2);
+      // f — surface tension: left edge, outward + downward (pointing left)
+      this.drawArrow(ctx2d, ringX - 36, ringY, ringX - 36 - fDx, ringY + fDy, '#dc2626', 2.0);
+      // f — surface tension: right edge, outward + downward (pointing right)
+      this.drawArrow(ctx2d, ringX + 36, ringY, ringX + 36 + fDx, ringY + fDy, '#dc2626', 2.0);
 
       // Labels
       ctx2d.fillStyle = '#dc2626';
       ctx2d.font = 'bold 11px sans-serif';
       ctx2d.textAlign = 'center';
       ctx2d.fillText('T₁', ringX + 14, ringY - forceLen - 4);
-      ctx2d.fillText('G', ringX + 14, ringY + forceLen * 0.6 + 12);
-      ctx2d.textAlign = 'right';
-      ctx2d.fillText('f', ringX - 42 - forceLen * 0.5, ringY + forceLen * 0.4);
-      ctx2d.textAlign = 'left';
-      ctx2d.fillText('f', ringX + 42 + forceLen * 0.5, ringY + forceLen * 0.4);
+      ctx2d.fillText('G', ringX + 14, ringY + forceLen * 0.58 + 12);
+      ctx2d.fillText('f', ringX - 42 - fDx, ringY + fDy * 0.55);
+      ctx2d.fillText('f', ringX + 42 + fDx, ringY + fDy * 0.55);
     }
 
     // L10: Digital voltmeter
