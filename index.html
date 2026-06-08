@@ -928,10 +928,16 @@ select:focus, input[type="number"]:focus {
         <div class="sim-left">
           <canvas id="mainCanvas" width="600" height="450"></canvas>
           <div class="sim-controls">
-            <label for="liquidSelect">液体：</label>
+            <label for="liquidSelect">数据专案：</label>
             <select id="liquidSelect">
-              <option value="water">实验数据拟合专案</option>
+              <option value="water_25c">纯水 25°C (α≈72.8)</option>
+              <option value="water_30c">纯水 30°C (α≈71.2)</option>
+              <option value="water_20c">纯水 20°C (α≈73.5)</option>
+              <option value="ethanol_25c">乙醇 25°C (α≈22.3)</option>
+              <option value="glycerol_25c">甘油 25°C (α≈63.4)</option>
+              <option value="custom">📂 自定义文件...</option>
             </select>
+            <input type="file" id="customDataFile" accept=".txt,.csv" style="display:none;margin-left:6px;font-size:0.78rem;">
             <span class="live-voltage" id="liveVoltage">
               <span>0.50</span><span class="unit">mN</span>
             </span>
@@ -1037,7 +1043,11 @@ select:focus, input[type="number"]:focus {
             <div class="param-group">
               <label>标准液体参考</label>
               <select id="refLiquid">
-                <option value="water">纯水 (72.8 mN/m)</option>
+                <option value="water_25c">纯水 25°C (72.8 mN/m)</option>
+                <option value="water_30c">纯水 30°C (71.2 mN/m)</option>
+                <option value="water_20c">纯水 20°C (73.5 mN/m)</option>
+                <option value="ethanol_25c">乙醇 25°C (22.3 mN/m)</option>
+                <option value="glycerol_25c">甘油 25°C (63.4 mN/m)</option>
               </select>
             </div>
           </div>
@@ -1236,14 +1246,45 @@ select:focus, input[type="number"]:focus {
 
 // ==================== LIQUID DATA DICTIONARY ====================
 // Physics: α(mN/m) = K(N/mV) * U(V) * 10⁹ / (π * (D₁ + D₂)(mm))
-// All force values in mN (raw sensor readings, 0–16 mN range)
 const LIQUIDS = {
-  water: {
-    name: '实验数据拟合专案',
-    color: '#4da6ff',
-    colorRGBA: 'rgba(77,166,255,0.42)',
-    filmRGBA: 'rgba(77,166,255,0.30)',
-    referenceAlpha: 72.8,
+  water_25c: {
+    name: '纯水 25°C', color: '#4da6ff', colorRGBA: 'rgba(77,166,255,0.42)', filmRGBA: 'rgba(77,166,255,0.30)',
+    referenceAlpha: 72.8, scaleFactor: 1.0,
+    get breakingTime() { return REAL_TOTAL_TIME; },
+    get maxForceTheoretical() { return REAL_FORCE_MAX * 1000; },
+    get baselineForce() { return REAL_FORCES.length > 0 ? REAL_FORCES[0] * 1000 : 0.5; }
+  },
+  water_30c: {
+    name: '纯水 30°C', color: '#ff9966', colorRGBA: 'rgba(255,153,102,0.40)', filmRGBA: 'rgba(255,153,102,0.28)',
+    referenceAlpha: 71.2, scaleFactor: 0.978,
+    get breakingTime() { return REAL_TOTAL_TIME; },
+    get maxForceTheoretical() { return REAL_FORCE_MAX * 1000; },
+    get baselineForce() { return REAL_FORCES.length > 0 ? REAL_FORCES[0] * 1000 : 0.5; }
+  },
+  water_20c: {
+    name: '纯水 20°C', color: '#3388ff', colorRGBA: 'rgba(51,136,255,0.42)', filmRGBA: 'rgba(51,136,255,0.30)',
+    referenceAlpha: 73.5, scaleFactor: 1.009,
+    get breakingTime() { return REAL_TOTAL_TIME; },
+    get maxForceTheoretical() { return REAL_FORCE_MAX * 1000; },
+    get baselineForce() { return REAL_FORCES.length > 0 ? REAL_FORCES[0] * 1000 : 0.5; }
+  },
+  ethanol_25c: {
+    name: '乙醇 25°C', color: '#ccdd00', colorRGBA: 'rgba(204,221,0,0.35)', filmRGBA: 'rgba(204,221,0,0.22)',
+    referenceAlpha: 22.3, scaleFactor: 0.306,
+    get breakingTime() { return REAL_TOTAL_TIME; },
+    get maxForceTheoretical() { return REAL_FORCE_MAX * 1000; },
+    get baselineForce() { return REAL_FORCES.length > 0 ? REAL_FORCES[0] * 1000 : 0.5; }
+  },
+  glycerol_25c: {
+    name: '甘油 25°C', color: '#ccaa66', colorRGBA: 'rgba(204,170,102,0.40)', filmRGBA: 'rgba(204,170,102,0.28)',
+    referenceAlpha: 63.4, scaleFactor: 0.871,
+    get breakingTime() { return REAL_TOTAL_TIME; },
+    get maxForceTheoretical() { return REAL_FORCE_MAX * 1000; },
+    get baselineForce() { return REAL_FORCES.length > 0 ? REAL_FORCES[0] * 1000 : 0.5; }
+  },
+  custom: {
+    name: '自定义数据', color: '#888888', colorRGBA: 'rgba(136,136,136,0.35)', filmRGBA: 'rgba(136,136,136,0.22)',
+    referenceAlpha: 70.0, scaleFactor: 1.0,
     get breakingTime() { return REAL_TOTAL_TIME; },
     get maxForceTheoretical() { return REAL_FORCE_MAX * 1000; },
     get baselineForce() { return REAL_FORCES.length > 0 ? REAL_FORCES[0] * 1000 : 0.5; }
@@ -1252,7 +1293,7 @@ const LIQUIDS = {
 
 // ==================== GLOBAL STATE ====================
 const state = {
-  selectedLiquid: 'water',
+  selectedLiquid: 'water_25c',
   activeTab: 'simulation',
   sim: {
     phase: 'idle',
@@ -1472,12 +1513,53 @@ const Renderer = {
     ctx2d.textAlign = 'center';
     ctx2d.fillText('硅压阻力敏传感器', 300, 66);
 
-    // L2: Connecting rod
+    // L2: Suspension — three wires from convergence hub to ring, equally spaced
+    const ringCX = 300, ringRX = 40, ringRY = 8;
+    const hubY = s.ringY - 30; // convergence hub above ring
+
+    // Three equally spaced wires (120° apart around the physical ring)
+    // Front wire at bottom of ellipse (closest to viewer), back two higher up
+    const wireAngles = [
+      { theta: Math.PI / 2,       zOrder: 1, bright: 1.0 },  // front — drawn last
+      { theta: 7 * Math.PI / 6,   zOrder: -1, bright: 0.55 }, // back-left
+      { theta: 11 * Math.PI / 6,  zOrder: -1, bright: 0.55 }, // back-right
+    ];
+
+    // Sort by z-order: back wires first (behind ring), front wire last (in front)
+    wireAngles.sort((a, b) => a.zOrder - b.zOrder);
+
+    wireAngles.forEach((w) => {
+      const wx = ringCX + ringRX * Math.cos(w.theta);
+      const wy = s.ringY + ringRY * Math.sin(w.theta);
+
+      const wireWidth = w.bright < 0.8 ? 0.8 : 1.4;
+      const grayVal = Math.round(120 - w.bright * 60);
+
+      ctx2d.save();
+      ctx2d.strokeStyle = `rgb(${grayVal},${grayVal},${grayVal})`;
+      ctx2d.lineWidth = wireWidth;
+      ctx2d.beginPath();
+      ctx2d.moveTo(ringCX, hubY);
+      ctx2d.lineTo(wx, wy);
+      ctx2d.stroke();
+      ctx2d.restore();
+    });
+
+    // Small convergence hub (drawn after back wires, before front wire)
+    ctx2d.fillStyle = '#6b7280';
+    ctx2d.strokeStyle = '#4b5563';
+    ctx2d.lineWidth = 1;
+    ctx2d.beginPath();
+    ctx2d.arc(ringCX, hubY, 3.5, 0, Math.PI * 2);
+    ctx2d.fill();
+    ctx2d.stroke();
+
+    // Main rod from sensor to hub
     ctx2d.strokeStyle = '#9ca3af';
     ctx2d.lineWidth = 1.8;
     ctx2d.beginPath();
     ctx2d.moveTo(300, 56);
-    ctx2d.lineTo(300, s.ringY - 4);
+    ctx2d.lineTo(ringCX, hubY);
     ctx2d.stroke();
 
     // L3: Lift platform
@@ -1530,12 +1612,12 @@ const Renderer = {
       ctx2d.strokeStyle = '#c9964c';
       ctx2d.lineWidth = 2.5;
       ctx2d.beginPath();
-      ctx2d.ellipse(300, y, 40, 5.5, 0, 0, Math.PI * 2);
+      ctx2d.ellipse(300, y, 40, 8, 0, 0, Math.PI * 2);
       ctx2d.stroke();
       ctx2d.strokeStyle = '#d4a574';
       ctx2d.lineWidth = 1.4;
       ctx2d.beginPath();
-      ctx2d.ellipse(300, y, 36, 3.5, 0, 0, Math.PI * 2);
+      ctx2d.ellipse(300, y, 36, 5.2, 0, 0, Math.PI * 2);
       ctx2d.stroke();
       ctx2d.restore();
     };
@@ -1553,7 +1635,7 @@ const Renderer = {
 
     // L8: Liquid film — inward-curving waist, bottom merges into liquid body
     if ((s.phase === 'pulling' || s.phase === 'breaking') && s.displacement > 0.03 && s.filmIntact) {
-      const ringBot = s.ringY + 2;
+      const ringBot = s.ringY + ringRY;
       const ft = ringBot;
       const filmBotY = liqTop;
       const midY = (ft + filmBotY) / 2;
@@ -1651,13 +1733,13 @@ const Renderer = {
     let displayForce = s.currentForce;
     if (s.phase === 'autoZero') displayForce = 0;
     ctx2d.fillStyle = '#34d399';
-    ctx2d.font = 'bold 28px "JetBrains Mono","Courier New",monospace';
+    ctx2d.font = 'bold 22px "JetBrains Mono","Courier New",monospace';
     ctx2d.textAlign = 'right';
-    ctx2d.fillText(displayForce.toFixed(2), vx + vw - 14, vy + 44);
+    ctx2d.fillText(displayForce.toFixed(2), vx + vw - 38, vy + 38);
     ctx2d.fillStyle = '#6ee7b7';
-    ctx2d.font = '11px sans-serif';
+    ctx2d.font = 'bold 12px "JetBrains Mono","Courier New",monospace';
     ctx2d.textAlign = 'left';
-    ctx2d.fillText('mN', vx + vw - 10, vy + 13);
+    ctx2d.fillText('mN', vx + vw - 32, vy + 38);
 
     if (s.phase === 'autoZero') {
       ctx2d.fillStyle = '#fbbf24';
@@ -5001,24 +5083,33 @@ const REAL_EXP_DATA = [
   [0.19530451, 1304.302]
 ];
 
-// 2. 预处理数据：提取力数据，并将时间起点归零、计算平均固定间隔
+// 2. Preprocess data: extract forces, zero time origin, compute average interval
 let REAL_FORCES = [];
-let REAL_TIME_INTERVAL = 0.026; // 默认间隔（预估约 26~27 毫秒）
+let REAL_TIME_INTERVAL = 0.026;
 let REAL_TOTAL_TIME = 6.0;
 let REAL_FORCE_MIN = 0;
 let REAL_FORCE_MAX = 20;
+let REAL_BASE_FORCES = []; // un-scaled base data
 
 (function initRealData() {
   if (REAL_EXP_DATA.length > 1) {
-    REAL_FORCES = REAL_EXP_DATA.map(function(row) { return row[0]; });
+    REAL_BASE_FORCES = REAL_EXP_DATA.map(function(row) { return row[0]; });
     var tStart = REAL_EXP_DATA[0][1];
     var tEnd = REAL_EXP_DATA[REAL_EXP_DATA.length - 1][1];
     REAL_TIME_INTERVAL = (tEnd - tStart) / (REAL_EXP_DATA.length - 1);
     REAL_TOTAL_TIME = tEnd - tStart;
-    REAL_FORCE_MIN = Math.min.apply(null, REAL_FORCES);
-    REAL_FORCE_MAX = Math.max.apply(null, REAL_FORCES);
+    applyLiquidScale('water_25c');
   }
 })();
+
+function applyLiquidScale(liquidKey) {
+  var lq = LIQUIDS[liquidKey];
+  if (!lq) return;
+  var sf = lq.scaleFactor || 1.0;
+  REAL_FORCES = REAL_BASE_FORCES.map(function(f) { return f * sf; });
+  REAL_FORCE_MIN = Math.min.apply(null, REAL_FORCES);
+  REAL_FORCE_MAX = Math.max.apply(null, REAL_FORCES);
+}
 
 const PhysicsModel = {
   // displacement 会随着仿真时间 (s.simTime) 推进，在此作为时间使用
@@ -5315,14 +5406,60 @@ function autoFillUmax(force) {
 btnAutoRun.addEventListener('click', () => SimEngine.start());
 btnReset.addEventListener('click', () => SimEngine.reset());
 
-liquidSelect.addEventListener('change', () => {
-  state.selectedLiquid = liquidSelect.value;
-  refLiquidSelect.value = liquidSelect.value;
+liquidSelect.addEventListener('change', function() {
+  var key = liquidSelect.value;
+  if (key === 'custom') {
+    $('#customDataFile').style.display = '';
+    $('#customDataFile').click();
+    return;
+  }
+  $('#customDataFile').style.display = 'none';
+  state.selectedLiquid = key;
+  refLiquidSelect.value = key;
+  applyLiquidScale(key);
   updateChartAxes();
   if (state.sim.phase === 'idle' || state.sim.phase === 'done') {
     Renderer.drawStatic();
-    // Keep existing chart data visible even when switching liquid in 'done' state
   }
+});
+
+$('#customDataFile').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var lines = ev.target.result.split('\n');
+    var newData = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim(); if (!line) continue;
+      if (i === 0 && (line.toLowerCase().indexOf('time') >= 0 || line.toLowerCase().indexOf('力') >= 0 || line.toLowerCase().indexOf('force') >= 0)) continue;
+      var parts;
+      if (line.indexOf('\t') >= 0) parts = line.split('\t').filter(function(p) { return p.trim(); });
+      else if (line.indexOf(',') >= 0) parts = line.split(',').filter(function(p) { return p.trim(); });
+      else parts = line.split(/\s+/).filter(function(p) { return p.trim(); });
+      if (parts.length < 2) continue;
+      try {
+        var f = parseFloat(parts[0]);
+        var t = parseFloat(parts[1]);
+        if (isNaN(f) || isNaN(t)) continue;
+        newData.push([f, t]);
+      } catch(ex) { continue; }
+    }
+    if (newData.length < 10) { alert('文件数据量不足（需≥10行）。'); return; }
+    REAL_BASE_FORCES = newData.map(function(r) { return r[0]; });
+    var tS = newData[0][1], tE = newData[newData.length-1][1];
+    REAL_TIME_INTERVAL = (tE - tS) / (newData.length - 1);
+    REAL_TOTAL_TIME = tE - tS;
+    LIQUIDS.custom.scaleFactor = 1.0;
+    state.selectedLiquid = 'custom';
+    refLiquidSelect.value = 'custom';
+    applyLiquidScale('custom');
+    updateChartAxes();
+    if (state.sim.phase === 'idle' || state.sim.phase === 'done') Renderer.drawStatic();
+    $('#customDataFile').style.display = '';
+    alert('已加载自定义数据: ' + file.name + ' (' + newData.length + ' 行)');
+  };
+  reader.readAsText(file, 'UTF-8');
 });
 
 refLiquidSelect.addEventListener('change', () => {
@@ -5587,7 +5724,7 @@ btnCompare.addEventListener('click', () => {
   const tradD2 = INSTRUMENTS.traditional.d2;
   const imprD1 = INSTRUMENTS.improved.d1;
   const imprD2 = INSTRUMENTS.improved.d2;
-  const refAlpha = LIQUIDS.water.referenceAlpha;
+  const refAlpha = LIQUIDS[refLiquidSelect.value].referenceAlpha;
 
   // Calculate α for each
   const tradAlpha = tradF.map(f => calcAlpha(f, tradD1, tradD2));
@@ -5706,7 +5843,7 @@ btnTempChart.addEventListener('click', () => {
 btnThickCalc.addEventListener('click', () => {
   const thickD1 = INSTRUMENTS.improved.d1;
   const thickD2 = INSTRUMENTS.improved.d2;
-  const refAlpha = LIQUIDS.water.referenceAlpha;
+  const refAlpha = LIQUIDS[refLiquidSelect.value].referenceAlpha;
   const thicknesses = [1, 2, 3, 4];
   const ids = ['thick1', 'thick2', 'thick3', 'thick4'];
 
